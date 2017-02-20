@@ -338,7 +338,6 @@ abstract public class SerialPort extends CommPort {
 	 */
 	public abstract void setSerialPortParams(int baudRate, int dataBits, int stopBits, int parity) throws UnsupportedCommOperationException;
 
-	
 	/**
 	 * Returns an input stream. This is the only way to receive data from the
 	 * communications port. If the port is unidirectional and doesn't support
@@ -414,8 +413,6 @@ abstract public class SerialPort extends CommPort {
 	 * <p>
 	 * 
 	 */
-	
 	public abstract InputStream getInputStream() throws IOException;
-
 
 }

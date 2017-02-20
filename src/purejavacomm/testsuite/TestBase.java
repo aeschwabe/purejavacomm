@@ -32,23 +32,22 @@ package purejavacomm.testsuite;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.Random;
 
 import purejavacomm.CommPortIdentifier;
 import purejavacomm.NoSuchPortException;
 import purejavacomm.SerialPort;
 
 public class TestBase {
-	static class TestFailedException extends Exception {
 
+	static class TestFailedException extends Exception {
+		private static final long serialVersionUID = 4326907945880121710L;
 	}
-	
+
 	public static final String APPLICATION_NAME = "PureJavaCommTestSuite";
 
 	protected static volatile String m_TestPortName;
 	protected static volatile SerialPort m_Port;
-	private  static volatile long m_T0;
+	private static volatile long m_T0;
 	protected static volatile OutputStream m_Out;
 	protected static volatile InputStream m_In;
 	protected static volatile int[] m_SyncSema4 = { 0 };
@@ -86,8 +85,7 @@ public class TestBase {
 				m_Port.close();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-			finally {
+			} finally {
 				m_Port = null;
 			}
 		}
@@ -117,7 +115,7 @@ public class TestBase {
 	static protected void sleep() throws InterruptedException {
 		sleep(40);
 	}
-	
+
 	static protected void sleep(int t) throws InterruptedException {
 		int m = 1000;
 		while (t > 0) {

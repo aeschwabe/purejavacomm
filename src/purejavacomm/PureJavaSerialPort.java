@@ -41,6 +41,7 @@ import static jtermios.JTermios.JTermiosLogging.*;
 import static jtermios.JTermios.*;
 
 public class PureJavaSerialPort extends SerialPort {
+
 	final boolean USE_POLL;
 	final boolean RAW_READ_MODE;
 	private Thread m_Thread;
@@ -84,7 +85,7 @@ public class PureJavaSerialPort extends SerialPort {
 	// we cache termios in m_Termios because we don't rely on reading it back with tcgetattr()
 	// which for Mac OS X / CRTSCTS does not work, it is also more efficient
 	private Termios m_Termios = new Termios();
-	private int m_MinVTIME;
+	//private int m_MinVTIME;
 
 	private void sendDataEvents(boolean read, boolean write) {
 		if (read && m_NotifyOnDataAvailable && !m_DataAvailableNotified) {
@@ -424,7 +425,6 @@ public class PureJavaSerialPort extends SerialPort {
 		checkState();
 		synchronized (m_Termios) {
 			Termios prev = new Termios();// (termios);
-
 			// save a copy in case we need to restore it
 			prev.set(m_Termios);
 
@@ -605,70 +605,78 @@ public class PureJavaSerialPort extends SerialPort {
 	synchronized public OutputStream getOutputStream() throws IOException {
 		checkState();
 		if (m_OutputStream == null) {
-			m_OutputStream = new OutputStream() {
-				// im_ for inner class member
-				private byte[] im_Buffer = new byte[2048];
-
-				@Override
-				final public void write(int b) throws IOException {
-					checkState();
-					byte[] buf = { (byte) b };
-					write(buf, 0, 1);
-				}
-
-				@Override
-				final public void write(byte[] buffer, int offset, int length) throws IOException {
-					if (buffer == null)
-						throw new IllegalArgumentException();
-					if (offset < 0 || length < 0 || offset + length > buffer.length)
-						throw new IndexOutOfBoundsException("buffer.lengt " + buffer.length + " offset " + offset + " length " + length);
-					checkState();
-					while (length > 0) {
-						int n = buffer.length - offset;
-						if (n > im_Buffer.length)
-							n = im_Buffer.length;
-						if (n > length)
-							n = length;
-						if (offset > 0) {
-							System.arraycopy(buffer, offset, im_Buffer, 0, n);
-							n = jtermios.JTermios.write(m_FD, im_Buffer, n);
-						} else
-							n = jtermios.JTermios.write(m_FD, buffer, n);
-
-						if (n < 0) {
-							PureJavaSerialPort.this.close();
-							throw new IOException();
-						}
-
-						length -= n;
-						offset += n;
-					}
-					m_OutputEmptyNotified = false;
-				}
-
-				@Override
-				final public void write(byte[] b) throws IOException {
-					write(b, 0, b.length);
-				}
-
-				@Override
-				public void close() throws IOException {
-					super.close();
-				}
-
-				@Override
-				final public void flush() throws IOException {
-					checkState();
-					if (tcdrain(m_FD) < 0) {
-						close();
-						throw new IOException();
-					}
-				}
-			};
+			m_OutputStream = new PureOutputStream(2048);
 		}
 		return m_OutputStream;
 	}
 
+	private final class PureOutputStream extends OutputStream {
+		// im_ for inner class member
+		private byte[] im_Buffer;
+
+		private PureOutputStream(int bufferSize) {
+			super();
+			this.im_Buffer = new byte[bufferSize];
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			checkState();
+			byte[] buf = new byte[] { (byte) b };
+			write(buf, 0, 1);
+		}
+
+		@Override
+		public void write(byte[] buffer, int offset, int length) throws IOException {
+			if (buffer == null)
+				throw new IllegalArgumentException();
+			if (offset < 0 || length < 0 || offset + length > buffer.length)
+				throw new IndexOutOfBoundsException("buffer.length " + buffer.length + " offset " + offset + " length " + length);
+			checkState();
+			while (length > 0) {
+				int n = buffer.length - offset;
+				if (n > im_Buffer.length)
+					n = im_Buffer.length;
+				if (n > length)
+					n = length;
+				if (offset > 0) {
+					System.arraycopy(buffer, offset, im_Buffer, 0, n);
+					n = jtermios.JTermios.write(m_FD, im_Buffer, n);
+				} else
+					n = jtermios.JTermios.write(m_FD, buffer, n);
+
+				if (n < 0) {
+					PureJavaSerialPort.this.close();
+					throw new IOException();
+				}
+
+				length -= n;
+				offset += n;
+			}
+			m_OutputEmptyNotified = false;
+		}
+
+		@Override
+		public void write(byte[] b) throws IOException {
+			write(b, 0, b.length);
+		}
+
+		@Override
+		public void close() throws IOException {
+			super.close();
+		}
+
+		@Override
+		public void flush() throws IOException {
+			checkState();
+			if (tcdrain(m_FD) < 0) {
+				close();
+				throw new IOException();
+			}
+		}
+	}
+
+	@Override
 	synchronized public InputStream getInputStream() throws IOException {
 		checkState();
 		if (m_InputStream == null) {
@@ -680,265 +688,267 @@ public class PureJavaSerialPort extends SerialPort {
 			// read()/vtim/vtime model. See the amount of code here
 			// and in windows.JTermiosImpl for  select() and read().
 			//
-			m_InputStream = new InputStream() {
-				// im_ for inner class members
-				private int[] im_Available = { 0 };
-				private byte[] im_Buffer = new byte[2048];
-				// this stuff is just cached/precomputed stuff to make read() faster
-				private int im_VTIME = -1;
-				private int im_VMIN = -1;
-				private final jtermios.Pollfd[] im_ReadPollFD = new Pollfd[] { new Pollfd(), new Pollfd() };
-				private byte[] im_Nudge;
-				private FDSet im_ReadFDSet;
-				private TimeVal im_ReadTimeVal;
-				private int im_PollFDn;
-				private boolean im_ReceiveTimeoutEnabled;
-				private int im_ReceiveTimeoutValue;
-				private boolean im_ReceiveThresholdEnabled;
-				private int im_ReceiveThresholdValue;
-				private boolean im_PollingReadMode;
-				private int im_ReceiveTimeoutVTIME;
-
-				{ // initialized block instead of construct in anonymous class
-					im_ReadFDSet = newFDSet();
-					im_ReadTimeVal = new TimeVal();
-					im_ReadPollFD[0].fd = m_FD;
-					im_ReadPollFD[0].events = POLLIN;
-					im_ReadPollFD[1].fd = m_PipeRdFD;
-					im_ReadPollFD[1].events = POLLIN;
-					im_PollFDn = m_HaveNudgePipe ? 2 : 1;
-					im_Nudge = new byte[1];
-				}
-
-				@Override
-				final public int available() throws IOException {
-					checkState();
-					if (ioctl(m_FD, FIONREAD, im_Available) < 0) {
-						PureJavaSerialPort.this.close();
-						System.out.println(Native.getLastError());
-						throw new IOException();
-					}
-					return im_Available[0];
-				}
-
-				@Override
-				final public int read() throws IOException {
-					checkState();
-					byte[] buf = { 0 };
-					int n = read(buf, 0, 1);
-
-					return n > 0 ? buf[0] & 0xFF : -1;
-				}
-
-				@Override
-				public void close() throws IOException {
-					super.close();
-				}
-
-				@Override
-				final public int read(byte[] buffer, int offset, int length) throws IOException {
-					// reads++;
-					if (buffer == null)
-						throw new IllegalArgumentException("buffer null");
-					if (length == 0)
-						return 0;
-					if (offset < 0 || length < 0 || offset + length > buffer.length)
-						throw new IndexOutOfBoundsException("buffer.length " + buffer.length + " offset " + offset + " length " + length);
-
-					if (RAW_READ_MODE) {
-						if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the value
-							synchronized (m_ThresholdTimeoutLock) {
-								int vtime = m_ReceiveTimeoutEnabled ? m_ReceiveTimeoutVTIME : 0;
-								int vmin = m_ReceiveThresholdEnabled ? m_ReceiveThresholdValue : 1;
-								synchronized (m_Termios) {
-									m_Termios.c_cc[VTIME] = (byte) vtime;
-									m_Termios.c_cc[VMIN] = (byte) vmin;
-									checkReturnCode(tcsetattr(m_FD, TCSANOW, m_Termios));
-								}
-								m_TimeoutThresholdChanged = false;
-							}
-						}
-						int bytesRead;
-						if (offset > 0) {
-							if (length < im_Buffer.length)
-								bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, length);
-							else
-								bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, im_Buffer.length);
-							if (bytesRead > 0)
-								System.arraycopy(im_Buffer, 0, buffer, offset, bytesRead);
-						} else
-							bytesRead = jtermios.JTermios.read(m_FD, buffer, length);
-						m_DataAvailableNotified = false;
-						return bytesRead;
-
-					} // End of raw read mode code
-
-					if (m_FD < 0) // replaces checkState call
-						failWithIllegalStateException();
-
-					if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the alue
-						synchronized (m_ThresholdTimeoutLock) {
-							// capture these here under guard so that we get a coherent picture of the settings
-							im_ReceiveTimeoutEnabled = m_ReceiveTimeoutEnabled;
-							im_ReceiveTimeoutValue = m_ReceiveTimeoutValue;
-							im_ReceiveThresholdEnabled = m_ReceiveThresholdEnabled;
-							im_ReceiveThresholdValue = m_ReceiveThresholdValue;
-							im_PollingReadMode = m_PollingReadMode;
-							im_ReceiveTimeoutVTIME = m_ReceiveTimeoutVTIME;
-							m_TimeoutThresholdChanged = false;
-						}
-					}
-
-					int bytesLeft = length;
-					int bytesReceived = 0;
-					int minBytesRequired;
-
-					// Note for optimal performance: message length == receive threshold == read length <= 255
-					// the best case execution path is marked with BEST below
-
-					while (true) {
-						// loops++;
-						int vmin;
-						int vtime;
-						if (im_PollingReadMode) {
-							minBytesRequired = 0;
-							vmin = 0;
-							vtime = 0;
-						} else {
-							if (im_ReceiveThresholdEnabled)
-								minBytesRequired = im_ReceiveThresholdValue; // BEST
-							else
-								minBytesRequired = 1;
-							if (minBytesRequired > bytesLeft) // in BEST case 'if' not taken
-								minBytesRequired = bytesLeft;
-							if (minBytesRequired <= 255)
-								vmin = minBytesRequired; // BEST case
-							else
-								vmin = 255;
-
-							// FIXME someone might change m_ReceiveTimeoutEnabled
-							if (im_ReceiveTimeoutEnabled)
-								vtime = im_ReceiveTimeoutVTIME; // BEST case
-							else
-								vtime = 0;
-						}
-						if (vmin != im_VMIN || vtime != im_VTIME) { // in BEST case 'if' not taken more than once for given InputStream instance
-							// ioctls++;
-							im_VMIN = vmin;
-							im_VTIME = vtime;
-							// This needs to be guarded with m_Termios so that these thing don't change on us
-							synchronized (m_Termios) {
-								m_Termios.c_cc[VTIME] = (byte) im_VTIME;
-								m_Termios.c_cc[VMIN] = (byte) im_VMIN;
-								checkReturnCode(tcsetattr(m_FD, TCSANOW, m_Termios));
-							}
-						}
-
-						// Now wait for data to be available, except in raw read mode
-						// and polling read modes. Following looks a bit longish
-						// but  there is actually not that much code to be executed
-						boolean dataAvailable = false;
-						boolean timedout = false;
-						if (!im_PollingReadMode) {
-							int n;
-							// long T0 = System.nanoTime();
-							// do a select()/poll(), just in case this read was
-							// called when no data is available
-							// so that we will not hang for ever in a read
-							int timeoutValue = im_ReceiveTimeoutEnabled ? im_ReceiveTimeoutValue : Integer.MAX_VALUE;
-							if (USE_POLL) { // BEST case in Linux but not on
-											// Windows or Mac OS X
-								n = poll(im_ReadPollFD, im_PollFDn, timeoutValue);
-								if (n < 0 || m_FD < 0) // the port closed while we were blocking in poll
-									throw new IOException();
-
-								if ((im_ReadPollFD[1].revents & POLLIN) != 0)
-									jtermios.JTermios.read(m_PipeRdFD, im_Nudge, 1);
-								int re = im_ReadPollFD[0].revents;
-								if ((re & POLLNVAL_OUT) != 0)
-									throw new IOException();
-								dataAvailable = (re & POLLIN) != 0;
-
-							} else { // this is a bit slower but then again it is unlikely
-								// this gets executed in a low horsepower system
-								FD_ZERO(im_ReadFDSet);
-								FD_SET(m_FD, im_ReadFDSet);
-								int maxFD = m_FD;
-								if (m_HaveNudgePipe) {
-									FD_SET(m_PipeRdFD, im_ReadFDSet);
-									if (m_PipeRdFD > maxFD)
-										maxFD = m_PipeRdFD;
-								}
-								if (timeoutValue >= 1000) {
-									int t = timeoutValue / 1000;
-									im_ReadTimeVal.tv_sec = t;
-									im_ReadTimeVal.tv_usec = (timeoutValue - t * 1000) * 1000;
-								} else {
-									im_ReadTimeVal.tv_sec = 0;
-									im_ReadTimeVal.tv_usec = timeoutValue * 1000;
-								}
-								n = select(maxFD + 1, im_ReadFDSet, null, null, im_ReadTimeVal);
-								if (n < 0)
-									throw new IOException();
-								if (m_FD < 0) // the port closed while we were
-												// blocking in select
-									throw new IOException();
-								dataAvailable = FD_ISSET(m_FD, im_ReadFDSet);
-							}
-							if (n == 0 && m_ReceiveTimeoutEnabled)
-								timedout = true;
-						}
-
-						if (timedout)
-							break;
-
-						// At this point data is either available or we take our
-						// chances in raw mode or this polling read which can't block
-						int bytesRead = 0;
-						if (dataAvailable || im_PollingReadMode) {
-							if (offset > 0) {
-								if (bytesLeft < im_Buffer.length)
-									bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, bytesLeft);
-								else
-									bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, im_Buffer.length);
-								if (bytesRead > 0)
-									System.arraycopy(im_Buffer, 0, buffer, offset, bytesRead);
-							} else
-								// this the BEST case execution path
-								bytesRead = jtermios.JTermios.read(m_FD, buffer, bytesLeft);
-							// readtime += System.nanoTime() - T0;
-							if (bytesRead == 0)
-								timedout = true;
-						}
-
-						// Now we have read data and try to return as quickly as
-						// possibly or we have timed out.
-
-						if (bytesRead < 0) // an error occured
-							throw new IOException();
-
-						bytesReceived += bytesRead;
-
-						if (bytesReceived >= minBytesRequired) // BEST case this if is taken and we  exit
-							break; // we have read the minimum required and will return that
-
-						if (timedout)
-							break;
-
-						// Ok, looks like we are in for an other loop, so update
-						// the offset
-						// and loop for some more
-						offset += bytesRead;
-						bytesLeft -= bytesRead;
-					}
-
-					m_DataAvailableNotified = false;
-					return bytesReceived;
-				}
-
-			};
+			m_InputStream = new PureInputStream(2048);
 		}
 		return m_InputStream;
+	}
+
+	private final class PureInputStream extends InputStream {
+		// im_ for inner class members
+		private final int[] im_Available = new int[] { 0 };
+		private byte[] im_Buffer;
+		// this stuff is just cached/precomputed stuff to make read() faster
+		private int im_VTIME = -1;
+		private int im_VMIN = -1;
+		private final jtermios.Pollfd[] im_ReadPollFD = new Pollfd[] { new Pollfd(), new Pollfd() };
+		private byte[] im_Nudge;
+		private FDSet im_ReadFDSet;
+		private TimeVal im_ReadTimeVal;
+		private int im_PollFDn;
+		private boolean im_ReceiveTimeoutEnabled;
+		private int im_ReceiveTimeoutValue;
+		private boolean im_ReceiveThresholdEnabled;
+		private int im_ReceiveThresholdValue;
+		private boolean im_PollingReadMode;
+		private int im_ReceiveTimeoutVTIME;
+
+		private PureInputStream(int bufferSize) {
+			super();
+			im_Buffer = new byte[bufferSize];
+			im_ReadFDSet = newFDSet();
+			im_ReadTimeVal = new TimeVal();
+			im_ReadPollFD[0].fd = m_FD;
+			im_ReadPollFD[0].events = POLLIN;
+			im_ReadPollFD[1].fd = m_PipeRdFD;
+			im_ReadPollFD[1].events = POLLIN;
+			im_PollFDn = m_HaveNudgePipe ? 2 : 1;
+			im_Nudge = new byte[1];
+		}
+
+		@Override
+		public int available() throws IOException {
+			checkState();
+			if (ioctl(m_FD, FIONREAD, im_Available) < 0) {
+				PureJavaSerialPort.this.close();
+				System.out.println(Native.getLastError());
+				throw new IOException();
+			}
+			return im_Available[0];
+		}
+
+		@Override
+		public int read() throws IOException {
+			checkState();
+			byte[] buf = new byte[] { 0 };
+			int n = read(buf, 0, 1);
+			return n > 0 ? buf[0] & 0xFF : -1;
+		}
+
+		@Override
+		public void close() throws IOException {
+			super.close();
+		}
+
+		@Override
+		public int read(byte[] buffer, int offset, int length) throws IOException {
+			// reads++;
+			if (buffer == null)
+				throw new IllegalArgumentException("buffer null");
+			if (length == 0)
+				return 0;
+			if (offset < 0 || length < 0 || offset + length > buffer.length)
+				throw new IndexOutOfBoundsException("buffer.length " + buffer.length + " offset " + offset + " length " + length);
+
+			if (RAW_READ_MODE) {
+				if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the value
+					synchronized (m_ThresholdTimeoutLock) {
+						int vtime = m_ReceiveTimeoutEnabled ? m_ReceiveTimeoutVTIME : 0;
+						int vmin = m_ReceiveThresholdEnabled ? m_ReceiveThresholdValue : 1;
+						synchronized (m_Termios) {
+							m_Termios.c_cc[VTIME] = (byte) vtime;
+							m_Termios.c_cc[VMIN] = (byte) vmin;
+							checkReturnCode(tcsetattr(m_FD, TCSANOW, m_Termios));
+						}
+						m_TimeoutThresholdChanged = false;
+					}
+				}
+				int bytesRead;
+				if (offset > 0) {
+					if (length < im_Buffer.length)
+						bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, length);
+					else
+						bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, im_Buffer.length);
+					if (bytesRead > 0)
+						System.arraycopy(im_Buffer, 0, buffer, offset, bytesRead);
+				} else
+					bytesRead = jtermios.JTermios.read(m_FD, buffer, length);
+				m_DataAvailableNotified = false;
+				return bytesRead;
+
+			} // End of raw read mode code
+
+			if (m_FD < 0) // replaces checkState call
+				failWithIllegalStateException();
+
+			if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the alue
+				synchronized (m_ThresholdTimeoutLock) {
+					// capture these here under guard so that we get a coherent picture of the settings
+					im_ReceiveTimeoutEnabled = m_ReceiveTimeoutEnabled;
+					im_ReceiveTimeoutValue = m_ReceiveTimeoutValue;
+					im_ReceiveThresholdEnabled = m_ReceiveThresholdEnabled;
+					im_ReceiveThresholdValue = m_ReceiveThresholdValue;
+					im_PollingReadMode = m_PollingReadMode;
+					im_ReceiveTimeoutVTIME = m_ReceiveTimeoutVTIME;
+					m_TimeoutThresholdChanged = false;
+				}
+			}
+
+			int bytesLeft = length;
+			int bytesReceived = 0;
+			int minBytesRequired;
+
+			// Note for optimal performance: message length == receive threshold == read length <= 255
+			// the best case execution path is marked with BEST below
+
+			while (true) {
+				// loops++;
+				int vmin;
+				int vtime;
+				if (im_PollingReadMode) {
+					minBytesRequired = 0;
+					vmin = 0;
+					vtime = 0;
+				} else {
+					if (im_ReceiveThresholdEnabled)
+						minBytesRequired = im_ReceiveThresholdValue; // BEST
+					else
+						minBytesRequired = 1;
+					if (minBytesRequired > bytesLeft) // in BEST case 'if' not taken
+						minBytesRequired = bytesLeft;
+					if (minBytesRequired <= 255)
+						vmin = minBytesRequired; // BEST case
+					else
+						vmin = 255;
+
+					// FIXME someone might change m_ReceiveTimeoutEnabled
+					if (im_ReceiveTimeoutEnabled)
+						vtime = im_ReceiveTimeoutVTIME; // BEST case
+					else
+						vtime = 0;
+				}
+				if (vmin != im_VMIN || vtime != im_VTIME) { // in BEST case 'if' not taken more than once for given InputStream instance
+					// ioctls++;
+					im_VMIN = vmin;
+					im_VTIME = vtime;
+					// This needs to be guarded with m_Termios so that these thing don't change on us
+					synchronized (m_Termios) {
+						m_Termios.c_cc[VTIME] = (byte) im_VTIME;
+						m_Termios.c_cc[VMIN] = (byte) im_VMIN;
+						checkReturnCode(tcsetattr(m_FD, TCSANOW, m_Termios));
+					}
+				}
+
+				// Now wait for data to be available, except in raw read mode
+				// and polling read modes. Following looks a bit longish
+				// but  there is actually not that much code to be executed
+				boolean dataAvailable = false;
+				boolean timedout = false;
+				if (!im_PollingReadMode) {
+					int n;
+					// long T0 = System.nanoTime();
+					// do a select()/poll(), just in case this read was
+					// called when no data is available
+					// so that we will not hang for ever in a read
+					int timeoutValue = im_ReceiveTimeoutEnabled ? im_ReceiveTimeoutValue : Integer.MAX_VALUE;
+					if (USE_POLL) { // BEST case in Linux but not on
+										// Windows or Mac OS X
+						n = poll(im_ReadPollFD, im_PollFDn, timeoutValue);
+						if (n < 0 || m_FD < 0) // the port closed while we were blocking in poll
+							throw new IOException();
+
+						if ((im_ReadPollFD[1].revents & POLLIN) != 0)
+							jtermios.JTermios.read(m_PipeRdFD, im_Nudge, 1);
+						int re = im_ReadPollFD[0].revents;
+						if ((re & POLLNVAL_OUT) != 0)
+							throw new IOException();
+						dataAvailable = (re & POLLIN) != 0;
+
+					} else { // this is a bit slower but then again it is unlikely
+						// this gets executed in a low horsepower system
+						FD_ZERO(im_ReadFDSet);
+						FD_SET(m_FD, im_ReadFDSet);
+						int maxFD = m_FD;
+						if (m_HaveNudgePipe) {
+							FD_SET(m_PipeRdFD, im_ReadFDSet);
+							if (m_PipeRdFD > maxFD)
+								maxFD = m_PipeRdFD;
+						}
+						if (timeoutValue >= 1000) {
+							int t = timeoutValue / 1000;
+							im_ReadTimeVal.tv_sec = t;
+							im_ReadTimeVal.tv_usec = (timeoutValue - t * 1000) * 1000;
+						} else {
+							im_ReadTimeVal.tv_sec = 0;
+							im_ReadTimeVal.tv_usec = timeoutValue * 1000;
+						}
+						n = select(maxFD + 1, im_ReadFDSet, null, null, im_ReadTimeVal);
+						if (n < 0)
+							throw new IOException();
+						if (m_FD < 0) // the port closed while we were
+											// blocking in select
+							throw new IOException();
+						dataAvailable = FD_ISSET(m_FD, im_ReadFDSet);
+					}
+					if (n == 0 && m_ReceiveTimeoutEnabled)
+						timedout = true;
+				}
+
+				if (timedout)
+					break;
+
+				// At this point data is either available or we take our
+				// chances in raw mode or this polling read which can't block
+				int bytesRead = 0;
+				if (dataAvailable || im_PollingReadMode) {
+					if (offset > 0) {
+						if (bytesLeft < im_Buffer.length)
+							bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, bytesLeft);
+						else
+							bytesRead = jtermios.JTermios.read(m_FD, im_Buffer, im_Buffer.length);
+						if (bytesRead > 0)
+							System.arraycopy(im_Buffer, 0, buffer, offset, bytesRead);
+					} else
+						// this the BEST case execution path
+						bytesRead = jtermios.JTermios.read(m_FD, buffer, bytesLeft);
+					// readtime += System.nanoTime() - T0;
+					if (bytesRead == 0)
+						timedout = true;
+				}
+
+				// Now we have read data and try to return as quickly as
+				// possibly or we have timed out.
+
+				if (bytesRead < 0) // an error occured
+					throw new IOException();
+
+				bytesReceived += bytesRead;
+
+				if (bytesReceived >= minBytesRequired) // BEST case this if is taken and we  exit
+					break; // we have read the minimum required and will return that
+
+				if (timedout)
+					break;
+
+				// Ok, looks like we are in for an other loop, so update
+				// the offset
+				// and loop for some more
+				offset += bytesRead;
+				bytesLeft -= bytesRead;
+			}
+
+			m_DataAvailableNotified = false;
+			return bytesReceived;
+		}
 	}
 
 	@Override
@@ -1052,7 +1062,7 @@ public class PureJavaSerialPort extends SerialPort {
 		}
 	}
 
-	/* package */PureJavaSerialPort(String name, int timeout) throws PortInUseException {
+	PureJavaSerialPort(String name, int timeout) throws PortInUseException {
 		super();
 
 		boolean usepoll = false;
@@ -1086,9 +1096,9 @@ public class PureJavaSerialPort extends SerialPort {
 				throw new PortInUseException("Unknown Application", errno);
 		}
 
-		m_MinVTIME = Integer.getInteger("purejavacomm.minvtime", 100);
+		//m_MinVTIME = Integer.getInteger("purejavacomm.minvtime", 100);
 		int flags = fcntl(m_FD, F_GETFL, 0);
-		if (flags<0)
+		if (flags < 0)
 			checkReturnCode(flags);
 		flags &= ~O_NONBLOCK;
 		checkReturnCode(fcntl(m_FD, F_SETFL, flags));
@@ -1144,119 +1154,124 @@ public class PureJavaSerialPort extends SerialPort {
 			}
 		}
 
-		Runnable runnable = new Runnable() {
-			public void run() {
-				try {
-					m_ThreadRunning = true;
-					// see: http://daniel.haxx.se/docs/poll-vs-select.html
-					final int TIMEOUT = Integer.getInteger("purejavacomm.pollperiod", 10);
-
-					TimeVal timeout = null;
-					FDSet rset = null;
-					FDSet wset = null;
-					jtermios.Pollfd[] pollfd = null;
-					byte[] nudge = null;
-
-					if (USE_POLL) {
-						pollfd = new Pollfd[] { new Pollfd(), new Pollfd() };
-						nudge = new byte[1];
-						pollfd[0].fd = m_FD;
-						pollfd[1].fd = m_PipeRdFD;
-					} else {
-						rset = newFDSet();
-						wset = newFDSet();
-						timeout = new TimeVal();
-						int t = TIMEOUT * 1000;
-						timeout.tv_sec = t / 1000000;
-						timeout.tv_usec = t - timeout.tv_sec * 1000000;
-					}
-
-					while (m_FD >= 0) {
-						boolean read = (m_NotifyOnDataAvailable && !m_DataAvailableNotified);
-						boolean write = (m_NotifyOnOutputEmpty && !m_OutputEmptyNotified);
-						int n = 0;
-
-						boolean pollCtrlLines = m_NotifyOnCTS || m_NotifyOnDSR || m_NotifyOnRI || m_NotifyOnCD;
-
-						if (read || write || (!pollCtrlLines && m_HaveNudgePipe)) {
-							if (USE_POLL) {
-								short e = 0;
-								if (read)
-									e |= POLLIN;
-								if (write)
-									e |= POLLOUT;
-								pollfd[0].events = e;
-								pollfd[1].events = POLLIN;
-								if (m_HaveNudgePipe)
-									n = poll(pollfd, 2, TIMEOUT);
-								else
-									n = poll(pollfd, 1, TIMEOUT);
-
-								int re = pollfd[1].revents;
-
-								if ((re & POLLNVAL) != 0) {
-									log = log && log(1, "poll() returned POLLNVAL, errno %d\n", errno());
-									break;
-								}
-
-								if ((re & POLLIN) != 0)
-									read(m_PipeRdFD, nudge, 1);
-
-								re = pollfd[0].revents;
-								if ((re & POLLNVAL) != 0) {
-									log = log && log(1, "poll() returned POLLNVAL, errno %d\n", errno());
-									break;
-								}
-								read = read && (re & POLLIN) != 0;
-								write = write && (re & POLLOUT) != 0;
-							} else {
-								FD_ZERO(rset);
-								FD_ZERO(wset);
-								if (read)
-									FD_SET(m_FD, rset);
-								if (write)
-									FD_SET(m_FD, wset);
-								if (m_HaveNudgePipe)
-									FD_SET(m_PipeRdFD, rset);
-								n = select(m_FD + 1, rset, wset, null, m_HaveNudgePipe ? null : timeout);
-								read = read && FD_ISSET(m_FD, rset);
-								write = write && FD_ISSET(m_FD, wset);
-							}
-
-							if (m_FD < 0)
-								break;
-							if (n < 0) {
-								log = log && log(1, "select() or poll() returned %d, errno %d\n", n, errno());
-								close();
-								break;
-							}
-						} else {
-							Thread.sleep(TIMEOUT);
-						}
-
-						if (m_EventListener != null) {
-							if (read || write)
-								sendDataEvents(read, write);
-							if (pollCtrlLines)
-								sendNonDataEvents();
-						}
-					}
-				} catch (InterruptedException ie) {
-				} finally {
-					m_ThreadRunning = false;
-				}
-			}
-		};
-		m_Thread = new Thread(runnable, getName());
+		m_Thread = new Thread(new PortWorker(), getName());
 		m_Thread.setDaemon(true);
+	}
+
+
+	private final class PortWorker implements Runnable {
+		private PortWorker() {
+		}
+
+		@Override
+		public void run() {
+			try {
+				m_ThreadRunning = true;
+				// see: http://daniel.haxx.se/docs/poll-vs-select.html
+				final int TIMEOUT = Integer.getInteger("purejavacomm.pollperiod", 10);
+
+				TimeVal timeout = null;
+				FDSet rset = null;
+				FDSet wset = null;
+				jtermios.Pollfd[] pollfd = null;
+				byte[] nudge = null;
+
+				if (USE_POLL) {
+					pollfd = new Pollfd[] { new Pollfd(), new Pollfd() };
+					nudge = new byte[1];
+					pollfd[0].fd = m_FD;
+					pollfd[1].fd = m_PipeRdFD;
+				} else {
+					rset = newFDSet();
+					wset = newFDSet();
+					timeout = new TimeVal();
+					int t = TIMEOUT * 1000;
+					timeout.tv_sec = t / 1000000;
+					timeout.tv_usec = t - timeout.tv_sec * 1000000;
+				}
+
+				while (m_FD >= 0) {
+					boolean read = (m_NotifyOnDataAvailable && !m_DataAvailableNotified);
+					boolean write = (m_NotifyOnOutputEmpty && !m_OutputEmptyNotified);
+					int n = 0;
+
+					boolean pollCtrlLines = m_NotifyOnCTS || m_NotifyOnDSR || m_NotifyOnRI || m_NotifyOnCD;
+
+					if (read || write || (!pollCtrlLines && m_HaveNudgePipe)) {
+						if (USE_POLL) {
+							short e = 0;
+							if (read)
+								e |= POLLIN;
+							if (write)
+								e |= POLLOUT;
+							pollfd[0].events = e;
+							pollfd[1].events = POLLIN;
+							if (m_HaveNudgePipe)
+								n = poll(pollfd, 2, TIMEOUT);
+							else
+								n = poll(pollfd, 1, TIMEOUT);
+
+							int re = pollfd[1].revents;
+
+							if ((re & POLLNVAL) != 0) {
+								log = log && log(1, "poll() returned POLLNVAL, errno %d\n", errno());
+								break;
+							}
+
+							if ((re & POLLIN) != 0)
+								read(m_PipeRdFD, nudge, 1);
+
+							re = pollfd[0].revents;
+							if ((re & POLLNVAL) != 0) {
+								log = log && log(1, "poll() returned POLLNVAL, errno %d\n", errno());
+								break;
+							}
+							read = read && (re & POLLIN) != 0;
+							write = write && (re & POLLOUT) != 0;
+						} else {
+							FD_ZERO(rset);
+							FD_ZERO(wset);
+							if (read)
+								FD_SET(m_FD, rset);
+							if (write)
+								FD_SET(m_FD, wset);
+							if (m_HaveNudgePipe)
+								FD_SET(m_PipeRdFD, rset);
+							n = select(m_FD + 1, rset, wset, null, m_HaveNudgePipe ? null : timeout);
+							read = read && FD_ISSET(m_FD, rset);
+							write = write && FD_ISSET(m_FD, wset);
+						}
+
+						if (m_FD < 0)
+							break;
+						if (n < 0) {
+							log = log && log(1, "select() or poll() returned %d, errno %d\n", n, errno());
+							close();
+							break;
+						}
+					} else {
+						Thread.sleep(TIMEOUT);
+					}
+
+					if (m_EventListener != null) {
+						if (read || write)
+							sendDataEvents(read, write);
+						if (pollCtrlLines)
+							sendNonDataEvents();
+					}
+				}
+			} catch (InterruptedException ie) {
+				// catch and exit silently
+			} finally {
+				m_ThreadRunning = false;
+			}
+		}
 	}
 
 	synchronized private void updateControlLineState(int line) {
 		checkState();
-
 		if (ioctl(m_FD, TIOCMGET, m_ioctl) == -1)
 			throw new PureJavaIllegalStateException("ioctl(m_FD, TIOCMGET, m_ioctl) == -1");
-
 		m_ControlLineStates = (m_ioctl[0] & line) + (m_ControlLineStates & ~line);
 	}
 

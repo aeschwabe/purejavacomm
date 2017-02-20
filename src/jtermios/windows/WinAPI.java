@@ -93,30 +93,33 @@ import static jtermios.JTermios.JTermiosLogging.*;
  */
 
 public class WinAPI {
+
 	private static Windows_kernel32_lib m_K32lib;
-        private static Windows_kernel32_lib_Direct m_K32libDM;
-        private static WaitMultiple m_K32libWM;
-        static {
-            // Moved to static per JNA recommendations
-            Native.setPreserveLastError(true); // For older JNA to hopefully preserve last error although we don't use it with Windows
-            // This had to be separated out for Direct Mapping (no non-primative arrays)
-            m_K32libWM = (WaitMultiple) Native.loadLibrary("kernel32", WaitMultiple.class, com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS);
-            // Added com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS so we don't mix/match WString and String
-            Native.register(Windows_kernel32_lib_Direct.class, NativeLibrary.getInstance("kernel32", com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS));
-            m_K32libDM = new Windows_kernel32_lib_Direct();
-            m_K32lib = m_K32libDM;
-            // m_K32lib = (Windows_kernel32_lib) Native.loadLibrary("kernel32", Windows_kernel32_lib.class, com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS);
-        }
-        
-        // The following is to fix JNA's non-thread-local getLastError implementation
-        private static final ThreadLocal<int[]> LastError = new ThreadLocal<int[]>() {
-            @Override
-            protected int[] initialValue() {
-                return new int[1];  // Arrays are always initialized to zero values
-            }
-        };
+	private static Windows_kernel32_lib_Direct m_K32libDM;
+	private static WaitMultiple m_K32libWM;
+	static {
+		// Moved to static per JNA recommendations
+		Native.setPreserveLastError(true); // For older JNA to hopefully preserve last error although we don't use it with Windows
+		// This had to be separated out for Direct Mapping (no non-primative arrays)
+		m_K32libWM = (WaitMultiple) Native.loadLibrary("kernel32", WaitMultiple.class, com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS);
+		// Added com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS so we don't mix/match WString and String
+		Native.register(Windows_kernel32_lib_Direct.class, NativeLibrary.getInstance("kernel32", com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS));
+		m_K32libDM = new Windows_kernel32_lib_Direct();
+		m_K32lib = m_K32libDM;
+		// m_K32lib = (Windows_kernel32_lib) Native.loadLibrary("kernel32", Windows_kernel32_lib.class, com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS);
+	}
+
+	// The following is to fix JNA's non-thread-local getLastError implementation
+	private static final ThreadLocal<int[]> LastError = new ThreadLocal<int[]>() {
+
+		@Override
+		protected int[] initialValue() {
+			return new int[1]; // Arrays are always initialized to zero values
+		}
+	};
 
 	public static class HANDLE extends PointerType {
+
 		private boolean immutable;
 
 		public HANDLE() {
@@ -149,6 +152,7 @@ public class WinAPI {
 	public static HANDLE NULL = new HANDLE(Pointer.createConstant(0));
 
 	public static class Windows_kernel32_lib_Direct implements Windows_kernel32_lib {
+
 		native public HANDLE CreateFile(String name, int access, int mode, SECURITY_ATTRIBUTES security, int create, int atteribs, Pointer template) throws LastErrorException;
 
 		native public boolean WriteFile(HANDLE hFile, byte[] buf, int wrn, int[] nwrtn, Pointer lpOverlapped) throws LastErrorException;
@@ -206,12 +210,14 @@ public class WinAPI {
 		native public int QueryDosDevice(String name, byte[] buffer, int bsize) throws LastErrorException;
 
 	}
-        
-        public interface WaitMultiple extends StdCallLibrary {
-		public int WaitForMultipleObjects(int nCount, HANDLE[] lpHandles, boolean bWaitAll, int dwMilliseconds);
-        }
 
-        public interface Windows_kernel32_lib extends StdCallLibrary {
+	public interface WaitMultiple extends StdCallLibrary {
+
+		public int WaitForMultipleObjects(int nCount, HANDLE[] lpHandles, boolean bWaitAll, int dwMilliseconds);
+	}
+
+	public interface Windows_kernel32_lib extends StdCallLibrary {
+
 		public HANDLE CreateFile(String name, int access, int mode, SECURITY_ATTRIBUTES security, int create, int atteribs, Pointer template);
 
 		public boolean WriteFile(HANDLE hFile, byte[] buf, int wrn, int[] nwrtn, Pointer lpOverlapped);
@@ -266,7 +272,7 @@ public class WinAPI {
 
 		public int FormatMessageW(int flags, Pointer src, int msgId, int langId, Pointer dst, int sze, Pointer va_list);
 
-		public int QueryDosDevice(String name, byte[] buffer, int bsize)  ;
+		public int QueryDosDevice(String name, byte[] buffer, int bsize);
 
 	}
 
@@ -400,6 +406,9 @@ public class WinAPI {
 	}
 
 	public static class ULONG_PTR extends IntegerType {
+
+		private static final long serialVersionUID = -6877628870206760077L;
+
 		public ULONG_PTR() {
 			this(0);
 		}
@@ -440,6 +449,7 @@ public class WinAPI {
 	 * 
 	 */
 	public static class OVERLAPPED extends Structure {
+
 		public ULONG_PTR Internal;
 		public ULONG_PTR InternalHigh;
 		public int Offset;
@@ -447,12 +457,12 @@ public class WinAPI {
 		public HANDLE hEvent;
 
 		@Override
-		protected List getFieldOrder() {
-			return Arrays.asList("Internal",//
-					"InternalHigh",//
-					"Offset",//
-					"OffsetHigh",//
-					"hEvent"//
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("Internal", //
+							"InternalHigh", //
+							"Offset", //
+							"OffsetHigh", //
+							"hEvent"//
 			);
 		}
 
@@ -462,26 +472,28 @@ public class WinAPI {
 
 		public String toString() {
 			return String.format(//
-					"[Offset %d OffsetHigh %d hEvent %s]",//
-					Offset, OffsetHigh, hEvent.toString());
+							"[Offset %d OffsetHigh %d hEvent %s]", //
+							Offset, OffsetHigh, hEvent.toString());
 		}
 	}
 
 	public static class SECURITY_ATTRIBUTES extends Structure {
+
 		public int nLength;
 		public Pointer lpSecurityDescriptor;
 		public boolean bInheritHandle;
 
 		@Override
-		protected List getFieldOrder() {
-			return Arrays.asList("nLength",//
-					"lpSecurityDescriptor",//
-					"bInheritHandle"//
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("nLength", //
+							"lpSecurityDescriptor", //
+							"bInheritHandle"//
 			);
 		}
 	}
 
 	public static class DCB extends Structure {
+
 		public int DCBlength;
 		public int BaudRate;
 		public int fFlags; // No bit field mapping in JNA so define a flags field and masks for fFlags
@@ -513,34 +525,35 @@ public class WinAPI {
 		public short wReserved1;
 
 		@Override
-		protected List getFieldOrder() {
-			return Arrays.asList("DCBlength",//
-					"BaudRate",//
-					"fFlags",//
-					"wReserved",//
-					"XonLim",//
-					"XoffLim",//
-					"ByteSize",//
-					"Parity",//
-					"StopBits",//
-					"XonChar",//
-					"XoffChar",//
-					"ErrorChar",//
-					"EofChar",//
-					"EvtChar",//
-					"wReserved1"//
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("DCBlength", //
+							"BaudRate", //
+							"fFlags", //
+							"wReserved", //
+							"XonLim", //
+							"XoffLim", //
+							"ByteSize", //
+							"Parity", //
+							"StopBits", //
+							"XonChar", //
+							"XoffChar", //
+							"ErrorChar", //
+							"EofChar", //
+							"EvtChar", //
+							"wReserved1"//
 			);
 		}
 
 		public String toString() {
 			return String.format(//
-					"[BaudRate %d fFlags %04X wReserved %d XonLim %d XoffLim %d ByteSize %d Parity %d StopBits %d XonChar %02X XoffChar %02X ErrorChar %02X EofChar %02X EvtChar %02X wReserved1 %d]", //
-					BaudRate, fFlags, wReserved, XonLim, XoffLim, ByteSize, Parity, StopBits, XonChar, XoffChar, ErrorChar, EofChar, EvtChar, wReserved1);
+							"[BaudRate %d fFlags %04X wReserved %d XonLim %d XoffLim %d ByteSize %d Parity %d StopBits %d XonChar %02X XoffChar %02X ErrorChar %02X EofChar %02X EvtChar %02X wReserved1 %d]", //
+							BaudRate, fFlags, wReserved, XonLim, XoffLim, ByteSize, Parity, StopBits, XonChar, XoffChar, ErrorChar, EofChar, EvtChar, wReserved1);
 		}
 
 	};
 
 	public static class COMMTIMEOUTS extends Structure {
+
 		public int ReadIntervalTimeout;
 		public int ReadTotalTimeoutMultiplier;
 		public int ReadTotalTimeoutConstant;
@@ -548,24 +561,25 @@ public class WinAPI {
 		public int WriteTotalTimeoutConstant;
 
 		@Override
-		protected List getFieldOrder() {
-			return Arrays.asList("ReadIntervalTimeout",//
-					"ReadTotalTimeoutMultiplier",//
-					"ReadTotalTimeoutConstant",//
-					"WriteTotalTimeoutMultiplier",//
-					"WriteTotalTimeoutConstant"//
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("ReadIntervalTimeout", //
+							"ReadTotalTimeoutMultiplier", //
+							"ReadTotalTimeoutConstant", //
+							"WriteTotalTimeoutMultiplier", //
+							"WriteTotalTimeoutConstant"//
 			);
 		}
 
 		public String toString() {
 			return String.format(//
-					"[ReadIntervalTimeout %d ReadTotalTimeoutMultiplier %d ReadTotalTimeoutConstant %d WriteTotalTimeoutMultiplier %d WriteTotalTimeoutConstant %d]", //
-					ReadIntervalTimeout, ReadTotalTimeoutMultiplier, ReadTotalTimeoutConstant, WriteTotalTimeoutMultiplier, WriteTotalTimeoutConstant);
+							"[ReadIntervalTimeout %d ReadTotalTimeoutMultiplier %d ReadTotalTimeoutConstant %d WriteTotalTimeoutMultiplier %d WriteTotalTimeoutConstant %d]", //
+							ReadIntervalTimeout, ReadTotalTimeoutMultiplier, ReadTotalTimeoutConstant, WriteTotalTimeoutMultiplier, WriteTotalTimeoutConstant);
 		}
 
 	};
 
 	public static class COMSTAT extends Structure {
+
 		public int fFlags;
 		public static final int fCtsHold = 0x00000001;
 		public static final int fDsrHold = 0x00000002;
@@ -579,10 +593,10 @@ public class WinAPI {
 		public int cbOutQue;
 
 		@Override
-		protected List getFieldOrder() {
-			return Arrays.asList("fFlags",//
-					"cbInQue",//
-					"cbOutQue"//
+		protected List<String> getFieldOrder() {
+			return Arrays.asList("fFlags", //
+							"cbInQue", //
+							"cbOutQue"//
 			);
 		}
 
@@ -593,14 +607,14 @@ public class WinAPI {
 
 	static public HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
 		log = log && log(5, "> CreateFileA(%s, 0x%08X, 0x%08X, %s, 0x%08X, 0x%08X,%s)\n", name, access, sharing, security, create, attribs, template);
-                HANDLE h;
-                try {
-                    h = m_K32lib.CreateFile(name, access, sharing, security, create, attribs, template);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    h = INVALID_HANDLE_VALUE;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		HANDLE h;
+		try {
+			h = m_K32lib.CreateFile(name, access, sharing, security, create, attribs, template);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			h = INVALID_HANDLE_VALUE;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< CreateFileA(%s, 0x%08X, 0x%08X, %s, 0x%08X, 0x%08X,%s) => %s\n", name, access, sharing, security, create, attribs, template, h);
 		return h;
 	}
@@ -608,14 +622,14 @@ public class WinAPI {
 	// This is for synchronous writes only
 	static public boolean WriteFile(HANDLE hFile, byte[] buf, int wrn, int[] nwrtn) {
 		log = log && log(5, "> WriteFile(%s, %s, %d, [%d])\n", hFile, log(buf, wrn), wrn, nwrtn[0]);
-                boolean res;
-                try {
-                    res = m_K32lib.WriteFile(hFile, buf, wrn, nwrtn, null);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.WriteFile(hFile, buf, wrn, nwrtn, null);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< WriteFile(%s, %s, %d, [%d]) => %s\n", hFile, log(buf, wrn), wrn, nwrtn[0], res);
 		return res;
 	}
@@ -623,14 +637,14 @@ public class WinAPI {
 	// This can be used with synchronous as well as overlapped writes
 	static public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED ovrlp) {
 		log = log && log(5, "> WriteFile(%s, %s, %d, [%d], %s)\n", hFile, log(buf.getByteArray(0, wrn), 5), wrn, nwrtn[0], ref(ovrlp));
-                boolean res;
-                try {
-                    res = m_K32lib.WriteFile(hFile, buf, wrn, nwrtn, ovrlp.getPointer());
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.WriteFile(hFile, buf, wrn, nwrtn, ovrlp.getPointer());
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< WriteFile(%s, %s, %d, [%d], %s) => %s\n", hFile, log(buf.getByteArray(0, wrn), 5), wrn, nwrtn[0], ref(ovrlp), res);
 		return res;
 	}
@@ -638,14 +652,14 @@ public class WinAPI {
 	// This is for synchronous reads only
 	static public boolean ReadFile(HANDLE hFile, byte[] buf, int rdn, int[] nrd) {
 		log = log && log(5, "> ReadFile(%s, %s, %d, [%d])\n", hFile, log(buf, rdn), rdn, nrd[0]);
-                boolean res;
-                try {
-                    res = m_K32lib.ReadFile(hFile, buf, rdn, nrd, null);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.ReadFile(hFile, buf, rdn, nrd, null);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< ReadFile(%s, %s, %d, [%d]) => %s\n", hFile, log(buf, rdn), rdn, nrd[0], res);
 		return res;
 	}
@@ -653,296 +667,296 @@ public class WinAPI {
 	// This can be used with synchronous as well as overlapped reads
 	static public boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED ovrlp) {
 		log = log && log(5, "> ReadFile(%s, %s, %d, [%d], %s)\n", hFile, log(buf.getByteArray(0, rdn), 5), rdn, nrd[0], ref(ovrlp));
-                boolean res;
-                try {
-                    res = m_K32lib.ReadFile(hFile, buf, rdn, nrd, ovrlp.getPointer());
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.ReadFile(hFile, buf, rdn, nrd, ovrlp.getPointer());
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< ReadFile(%s, %s, %d, [%d], %s) => %s\n", hFile, log(buf.getByteArray(0, rdn), 5), rdn, nrd[0], ref(ovrlp), res);
 		return res;
 	}
 
 	static public boolean FlushFileBuffers(HANDLE hFile) {
 		log = log && log(5, "> FlushFileBuffers(%s)\n", hFile);
-                boolean res;
-                try {
-                    res = m_K32lib.FlushFileBuffers(hFile);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.FlushFileBuffers(hFile);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< FlushFileBuffers(%s) => %s\n", hFile, res);
 		return res;
 	}
 
 	static public boolean PurgeComm(HANDLE hFile, int qmask) {
 		log = log && log(5, "> PurgeComm(%s,0x%08X)\n", hFile, qmask);
-                boolean res;
-                try {
-                    res = m_K32lib.PurgeComm(hFile, qmask);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.PurgeComm(hFile, qmask);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< PurgeComm(%s,0x%08X) => %s\n", hFile, qmask, res);
 		return res;
 	}
 
 	static public boolean CancelIo(HANDLE hFile) {
 		log = log && log(5, "> CancelIo(%s)\n", hFile);
-                boolean res;
-                try {
-                    res = m_K32lib.CancelIo(hFile);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.CancelIo(hFile);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< CancelIo(%s) => %s\n", hFile, res);
 		return res;
 	}
 
 	static public boolean CloseHandle(HANDLE hFile) {
 		log = log && log(5, "> CloseHandle(%s)\n", hFile);
-                boolean res;
-                try {
-                    res = m_K32lib.CloseHandle(hFile);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.CloseHandle(hFile);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< CloseHandle(%s) => %s\n", hFile, res);
 		return res;
 	}
 
 	static public boolean ClearCommError(HANDLE hFile, int[] n, COMSTAT s) {
 		log = log && log(5, "> ClearCommError(%s, [%d], %s)\n", hFile, n[0], s);
-                boolean res;
-                try {
-                    res = m_K32lib.ClearCommError(hFile, n, s);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.ClearCommError(hFile, n, s);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< ClearCommError(%s, [%d], %s) => %s\n", hFile, n[0], s, res);
 		return res;
 	}
 
 	static public boolean SetCommMask(HANDLE hFile, int mask) {
 		log = log && log(5, "> SetCommMask(%s, 0x%08X)\n", hFile, mask);
-                boolean res;
-                try {
-                    res = m_K32lib.SetCommMask(hFile, mask);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetCommMask(hFile, mask);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetCommMask(%s, 0x%08X) => %s\n", hFile, mask, res);
 		return res;
 	}
 
 	static public boolean GetCommMask(HANDLE hFile, int[] mask) {
 		log = log && log(5, "> GetCommMask(%s, [0x%08X])\n", hFile, mask[0]);
-                boolean res;
-                try {
-                    res = m_K32lib.GetCommMask(hFile, mask);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.GetCommMask(hFile, mask);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< GetCommMask(%s, [0x%08X]) => %s\n", hFile, mask[0], res);
 		return res;
 	}
 
 	static public boolean GetCommState(HANDLE hFile, DCB dcb) {
 		log = log && log(5, "> GetCommState(%s, %s)\n", hFile, dcb);
-                boolean res;
-                try {
-                    res = m_K32lib.GetCommState(hFile, dcb);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.GetCommState(hFile, dcb);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< GetCommState(%s, %s) => %s\n", hFile, dcb, res);
 		return res;
 	}
 
 	static public boolean SetCommState(HANDLE hFile, DCB dcb) {
 		log = log && log(5, "> SetCommState(%s, %s)\n", hFile, dcb);
-                boolean res;
-                try {
-                    res = m_K32lib.SetCommState(hFile, dcb);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetCommState(hFile, dcb);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetCommState(%s, %s) => %s\n", hFile, dcb, res);
 		return res;
 	}
 
 	static public boolean SetCommTimeouts(HANDLE hFile, COMMTIMEOUTS touts) {
 		log = log && log(5, "> SetCommTimeouts(%s, %s)\n", hFile, touts);
-                boolean res;
-                try {
-                    res = m_K32lib.SetCommTimeouts(hFile, touts);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetCommTimeouts(hFile, touts);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetCommTimeouts(%s, %s) => %s\n", hFile, touts, res);
 		return res;
 	}
 
 	static public boolean SetupComm(HANDLE hFile, int inQueueSz, int outQueueSz) {
 		log = log && log(5, "> SetCommTimeouts(%s, %d, %d)\n", hFile, inQueueSz, outQueueSz);
-                boolean res;
-                try {
-                    res = m_K32lib.SetupComm(hFile, inQueueSz, outQueueSz);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetupComm(hFile, inQueueSz, outQueueSz);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetCommTimeouts(%s, %d, %d) => %s\n", hFile, inQueueSz, outQueueSz, res);
 		return res;
 	}
 
 	static public boolean SetCommBreak(HANDLE hFile) {
 		log = log && log(5, "> SetCommBreak(%s)\n", hFile);
-                boolean res;
-                try {
-                    res = m_K32lib.SetCommBreak(hFile);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetCommBreak(hFile);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetCommBreak(%s) => %s\n", hFile, res);
 		return res;
 	}
 
 	static public boolean ClearCommBreak(HANDLE hFile) {
 		log = log && log(5, "> ClearCommBreak(%s)\n", hFile);
-                boolean res;
-                try {
-                    res = m_K32lib.ClearCommBreak(hFile);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.ClearCommBreak(hFile);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< ClearCommBreak(%s) => %s\n", hFile, res);
 		return res;
 	}
 
 	static public boolean GetCommModemStatus(HANDLE hFile, int[] stat) {
 		log = log && log(5, "> GetCommModemStatus(%s,0x%08X)\n", hFile, stat[0]);
-                boolean res;
-                try {
-                    res = m_K32lib.GetCommModemStatus(hFile, stat);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.GetCommModemStatus(hFile, stat);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< GetCommModemStatus(%s,0x%08X) => %s\n", hFile, stat[0], res);
 		return res;
 	}
 
 	static public boolean EscapeCommFunction(HANDLE hFile, int func) {
 		log = log && log(5, "> EscapeCommFunction(%s,0x%08X)\n", hFile, func);
-                boolean res;
-                try {
-                    res = m_K32lib.EscapeCommFunction(hFile, func);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.EscapeCommFunction(hFile, func);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< EscapeCommFunction(%s,0x%08X) => %s\n", hFile, func, res);
 		return res;
 	}
 
 	static public HANDLE CreateEvent(SECURITY_ATTRIBUTES security, boolean manual, boolean initial, String name) {
 		log = log && log(5, "> CreateEventA(%s, %s, %s, %s)\n", ref(security), manual, initial, name);
-                HANDLE h;
-                try {
-                    h = m_K32lib.CreateEvent(security, manual, initial, name);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    h = INVALID_HANDLE_VALUE;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		HANDLE h;
+		try {
+			h = m_K32lib.CreateEvent(security, manual, initial, name);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			h = INVALID_HANDLE_VALUE;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< CreateEventA(%s, %s, %s, %s) => %s\n", ref(security), manual, initial, name, h);
 		return h;
 	}
 
 	static public boolean SetEvent(HANDLE hEvent) {
 		log = log && log(5, "> SetEvent(%s)\n", hEvent);
-                boolean res;
-                try {
-                    res = m_K32lib.SetEvent(hEvent);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.SetEvent(hEvent);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< SetEvent(%s) => %s\n", hEvent, res);
 		return res;
 	}
 
 	static public boolean ResetEvent(HANDLE hEvent) {
 		log = log && log(5, "> ResetEvent(%s)\n", hEvent);
-                boolean res;
-                try {
-                    res = m_K32lib.ResetEvent(hEvent);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.ResetEvent(hEvent);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< ResetEvent(%s) => %s\n", hEvent, res);
 		return res;
 	}
 
 	static public boolean WaitCommEvent(HANDLE hFile, IntByReference lpEvtMask, OVERLAPPED ovl) {
 		log = log && log(5, "> WaitCommEvent(%s, [%d], %s)\n", hFile, lpEvtMask.getValue(), ref(ovl));
-                boolean res;
-                try {
-                    res = m_K32lib.WaitCommEvent(hFile, lpEvtMask, ovl.getPointer());
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.WaitCommEvent(hFile, lpEvtMask, ovl.getPointer());
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< WaitCommEvent(%s, [%d], %s) => %s\n", hFile, lpEvtMask.getValue(), ref(ovl), res);
 		return res;
 	}
 
 	static public boolean WaitCommEvent(HANDLE hFile, int[] lpEvtMask) {
 		log = log && log(5, "> WaitCommEvent(%s, [%d], %s) => %s\n", hFile, lpEvtMask[0], null);
-                IntByReference brlpEvtMask = new IntByReference(lpEvtMask[0]);
-                boolean res;
-                try {
-                    res = m_K32lib.WaitCommEvent(hFile, brlpEvtMask, null);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
-                lpEvtMask[0] = brlpEvtMask.getValue();
+		IntByReference brlpEvtMask = new IntByReference(lpEvtMask[0]);
+		boolean res;
+		try {
+			res = m_K32lib.WaitCommEvent(hFile, brlpEvtMask, null);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
+		lpEvtMask[0] = brlpEvtMask.getValue();
 		log = log && log(4, "< WaitCommEvent(%s, [%d], %s) => %s\n", hFile, lpEvtMask[0], null, res);
 		return res;
 	}
@@ -963,14 +977,14 @@ public class WinAPI {
 
 	static public boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED ovl, int[] ntfrd, boolean wait) {
 		log = log && log(5, "> GetOverlappedResult(%s, %s, [%d], %s)\n", hFile, ref(ovl), ntfrd[0], wait);
-                boolean res;
-                try {
-                    res = m_K32lib.GetOverlappedResult(hFile, ovl.getPointer(), ntfrd, wait);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = false;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		boolean res;
+		try {
+			res = m_K32lib.GetOverlappedResult(hFile, ovl.getPointer(), ntfrd, wait);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = false;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< GetOverlappedResult(%s, %s, [%d], %s) => %s\n", hFile, ref(ovl), ntfrd[0], wait, res);
 		return res;
 	}
@@ -988,16 +1002,17 @@ public class WinAPI {
 		log = log && log(4, "< FormatMessageW(%08x, %08x, %d, %d, %s, %d, %s) => %d\n", flags, src, msgId, langId, dst, sze, va_list, res);
 		return res;
 	}
+
 	static public int QueryDosDevice(String name, byte[] buffer, int bsize) {
 		log = log && log(5, "> QueryDosDeviceA(%s, %s, %d)\n", name, buffer, bsize);
-                int res;
-                try {
-                    res = m_K32lib.QueryDosDevice(name, buffer, bsize);
-                    LastError.get()[0] = 0;
-                } catch (LastErrorException le) {
-                    res = 0;
-                    LastError.get()[0] = le.getErrorCode();
-                }
+		int res;
+		try {
+			res = m_K32lib.QueryDosDevice(name, buffer, bsize);
+			LastError.get()[0] = 0;
+		} catch (LastErrorException le) {
+			res = 0;
+			LastError.get()[0] = le.getErrorCode();
+		}
 		log = log && log(4, "< QueryDosDeviceA(%s, %s, %d) => %d\n", name, buffer, bsize, res);
 		return res;
 	}

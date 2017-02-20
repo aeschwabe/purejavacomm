@@ -33,6 +33,7 @@ import purejavacomm.SerialPortEvent;
 import purejavacomm.SerialPortEventListener;
 
 public class Test1 extends TestBase {
+
 	static void run() throws Exception {
 
 		try {
@@ -41,13 +42,14 @@ public class Test1 extends TestBase {
 			m_Port.setRTS(false);
 			m_Port.setDTR(false);
 			sleep();
-			
+
 			m_Port.notifyOnCTS(true);
 			m_Port.notifyOnRingIndicator(true);
 			m_Port.notifyOnCarrierDetect(true);
 			m_Port.notifyOnDSR(true);
 			final int[] counts = new int[11];
 			m_Port.addEventListener(new SerialPortEventListener() {
+
 				public void serialEvent(SerialPortEvent event) {
 					try {
 						if (event.getEventType() == SerialPortEvent.CTS)
@@ -74,7 +76,7 @@ public class Test1 extends TestBase {
 			if (counts[SerialPortEvent.DSR] != N / 2 - 1)
 				fail("DSR loopback failed, expected %d toggles, got %d", N / 2 - 1, counts[SerialPortEvent.DSR]);
 			if (counts[SerialPortEvent.RI] != N - 1)
-				fail("RI loopback failed, expected %d toggles, got %d", N-1, counts[SerialPortEvent.RI]);
+				fail("RI loopback failed, expected %d toggles, got %d", N - 1, counts[SerialPortEvent.RI]);
 			if (counts[SerialPortEvent.CD] != N / 2 - 1)
 				fail("CTS loopback failed, expected %d toggles, got %d", N / 2 - 1, counts[SerialPortEvent.CD]);
 			finishedOK();

@@ -29,10 +29,8 @@
  */
 package purejavacomm.testsuite;
 
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
-
 public class Test4 extends TestBase {
+
 	private static Exception m_Exception = null;
 	private static Thread m_Receiver;
 	private static Thread m_Transmitter;
@@ -43,6 +41,7 @@ public class Test4 extends TestBase {
 			openPort();
 			// receiving thread
 			m_Receiver = new Thread(new Runnable() {
+
 				public void run() {
 					try {
 						sync(2);
@@ -68,6 +67,7 @@ public class Test4 extends TestBase {
 
 			// sending thread
 			m_Transmitter = new Thread(new Runnable() {
+
 				public void run() {
 					try {
 						sync(2);

@@ -45,15 +45,16 @@ import static jtermios.JTermios.*;
 import static jtermios.JTermios.JTermiosLogging.log;
 
 public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
+
 	private static int IOSSIOSPEED = 0x80045402;
 	private static String DEVICE_DIR_PATH = "/dev/";
 	static C_lib_DirectMapping m_ClibDM;
 	static C_lib m_Clib;
-//	static NonDirectCLib m_ClibND;
+	//static NonDirectCLib m_ClibND;
 
 	static {
-                Native.setPreserveLastError(true);
-//		m_ClibND = (NonDirectCLib) Native.loadLibrary(Platform.C_LIBRARY_NAME, NonDirectCLib.class);
+		Native.setPreserveLastError(true);
+		//m_ClibND = (NonDirectCLib) Native.loadLibrary(Platform.C_LIBRARY_NAME, NonDirectCLib.class);
 		Native.register(C_lib_DirectMapping.class, NativeLibrary.getInstance(Platform.C_LIBRARY_NAME));
 		m_ClibDM = new C_lib_DirectMapping();
 		m_Clib = m_ClibDM;
@@ -147,12 +148,14 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 
 	}
 
-//	public interface NonDirectCLib extends com.sun.jna.Library {
-//
-//		public int ioctl(int fd, NativeLong cmd, NativeLong[] arg);
-//
-//		//       public int poll(pollfd.ByReference pfds, int nfds, int timeout);
-//	}
+	/*
+	public interface NonDirectCLib extends com.sun.jna.Library {
+	
+		public int ioctl(int fd, NativeLong cmd, NativeLong[] arg);
+	
+		//public int poll(pollfd.ByReference pfds, int nfds, int timeout);
+	}
+	*/
 
 	static public class timeval extends Structure {
 
@@ -160,10 +163,10 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		public NativeLong tv_usec;
 
 		@Override
-		protected List getFieldOrder() {
+		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"tv_sec",//
-					"tv_usec"//
+							"tv_sec", //
+							"tv_usec"//
 			);
 		}
 
@@ -183,11 +186,11 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		public short revents;
 
 		@Override
-		protected List getFieldOrder() {
+		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"fd",//
-					"events",//
-					"revents"//
+							"fd", //
+							"events", //
+							"revents"//
 			);
 		}
 
@@ -208,9 +211,9 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		public int[] fd_array = new int[(fd_count + NFBBITS - 1) / NFBBITS];
 
 		@Override
-		protected List getFieldOrder() {
+		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"fd_array"//
+							"fd_array"//
 			);
 		}
 
@@ -243,15 +246,15 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		public NativeLong c_ospeed;
 
 		@Override
-		protected List getFieldOrder() {
+		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"c_iflag",//
-					"c_oflag",//
-					"c_cflag",//
-					"c_lflag",//
-					"c_cc",//
-					"c_ispeed",//
-					"c_ospeed"//
+							"c_iflag", //
+							"c_oflag", //
+							"c_cflag", //
+							"c_lflag", //
+							"c_cc", //
+							"c_ispeed", //
+							"c_ospeed"//
 			);
 		}
 
@@ -389,8 +392,8 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 	}
 
 	public int ioctl(int fd, int cmd, int... data) {
-                // At this time, all ioctl commands we have defined are either no parameter or 4 byte parameter.
-                return m_Clib.ioctl(fd, new NativeLong(0xFFFFFFFFL & cmd), data);
+		// At this time, all ioctl commands we have defined are either no parameter or 4 byte parameter.
+		return m_Clib.ioctl(fd, new NativeLong(0xFFFFFFFFL & cmd), data);
 	}
 
 	public List<String> getPortList() {
@@ -418,7 +421,6 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 	}
 
 	public void shutDown() {
-
 	}
 
 	public int setspeed(int fd, Termios termios, int speed) {

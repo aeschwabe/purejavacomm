@@ -29,10 +29,8 @@
  */
 package purejavacomm.testsuite;
 
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
-
 public class Test7 extends TestBase {
+
 	private static Exception m_Exception = null;
 	private static Thread m_Receiver;
 	private static Thread m_Transmitter;
@@ -44,6 +42,7 @@ public class Test7 extends TestBase {
 			openPort();
 			// receiving thread
 			m_Receiver = new Thread(new Runnable() {
+
 				public void run() {
 					try {
 						sync(2);
@@ -55,7 +54,7 @@ public class Test7 extends TestBase {
 						if (n != 7)
 							fail("read did not get 7 bytes as expected, got %d", n);
 						if (dT < 10000)
-							fail("timed out in %d though we got 7 bytes",dT);
+							fail("timed out in %d though we got 7 bytes", dT);
 
 					} catch (InterruptedException e) {
 					} catch (Exception e) {
@@ -69,6 +68,7 @@ public class Test7 extends TestBase {
 
 			// sending thread
 			m_Transmitter = new Thread(new Runnable() {
+
 				public void run() {
 					try {
 						sync(2);

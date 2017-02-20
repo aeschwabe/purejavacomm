@@ -44,6 +44,7 @@ import static jtermios.windows.WinAPI.*;
 import static jtermios.windows.WinAPI.DCB.*;
 
 public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
+
 	private volatile int m_ErrNo = 0;
 
 	private volatile boolean m_PortFDs[] = new boolean[FDSetImpl.FD_SET_SIZE];
@@ -51,6 +52,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 	private volatile Hashtable<Integer, Port> m_OpenPorts = new Hashtable<Integer, Port>();
 
 	private class Port {
+
 		volatile int m_FD = -1;
 		volatile boolean m_Locked;
 		volatile HANDLE m_Comm;
@@ -60,7 +62,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		volatile COMSTAT m_COMSTAT = new COMSTAT();
 		volatile int[] m_ClearErr = { 0 };
 		volatile Memory m_RdBuffer = new Memory(2048);
-		volatile int[] m_RdErr = { 0 };
+		//volatile int[] m_RdErr = { 0 };
 		volatile int m_RdN[] = { 0 };
 		volatile OVERLAPPED m_RdOVL = new OVERLAPPED();
 		volatile HANDLE m_ReadCancelObject;
@@ -248,16 +250,19 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 	};
 
 	static class Fail extends Exception {
-
+		private static final long serialVersionUID = -8098320222833116111L;
 	}
 
-	//static private class FDSetImpl extends FDSet {
-	//	static final int FD_SET_SIZE = 256; // Windows supports max 255 serial ports so this is enough
-	//	static final int NFBBITS = 32;
-	//	int[] bits = new int[(FD_SET_SIZE + NFBBITS - 1) / NFBBITS];
-	//}
+	/*
+	static private class FDSetImpl extends FDSet {
+		static final int FD_SET_SIZE = 256; // Windows supports max 255 serial ports so this is enough
+		static final int NFBBITS = 32;
+		int[] bits = new int[(FD_SET_SIZE + NFBBITS - 1) / NFBBITS];
+	}
+	*/
 
 	static private class FDSetImpl implements FDSet {
+
 		static final int FD_SET_SIZE = 256; // Windows supports max 255 serial ports so this is enough
 		static final int NFBBITS = 32;
 		int[] bits = new int[(FD_SET_SIZE + NFBBITS - 1) / NFBBITS];
@@ -364,6 +369,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		}
 	}
 
+	/*
 	private int getCharBits(Termios tios) {
 		int cs = 8; // default to 8
 		if ((tios.c_cflag & CSIZE) == CS5)
@@ -381,6 +387,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		cs += 1 + 1; // start bit + stop bit
 		return cs;
 	}
+	*/
 
 	private static int min(int a, int b) {
 		return a < b ? a : b;
@@ -404,7 +411,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 				if (length == 0)
 					return 0;
 
-				int error;
+				//int error;
 
 				if ((port.m_OpenFlags & O_NONBLOCK) != 0) {
 					clearCommErrors(port);
@@ -520,7 +527,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 						length = room;
 				}
 
-				int old_flag;
+				//int old_flag;
 
 				if (!ResetEvent(port.m_WrOVL.hEvent))
 					port.fail();
@@ -975,6 +982,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 	// just the baudrates so basically this is a no-op, it returns what it gets
 	// Note this assumes that the Bxxxx constants in JTermios have the default
 	// values ie the values are the baudrates.
+	/*
 	private static int baudToDCB(int baud) {
 		switch (baud) {
 			case 110:
@@ -1005,11 +1013,12 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 				return CBR_128000;
 			case 256000:
 				return CBR_256000;
-
+	
 			default:
 				return baud;
 		}
 	}
+	*/
 
 	public FDSet newFDSet() {
 		return new FDSetImpl();
@@ -1043,7 +1052,8 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		java.util.Arrays.fill(p.bits, 0);
 	}
 
-	public int ioctl(int fd, int cmd, int[] arg) {
+	@Override
+	public int ioctl(int fd, int cmd, int... arg) {
 		Port port = getPort(fd);
 		if (port == null)
 			return -1;
@@ -1112,13 +1122,17 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 		}
 	}
 
+	/*
 	private void set_errno(int x) {
 		m_ErrNo = x;
 	}
+	*/
 
+	/*
 	private void report(String msg) {
 		System.err.print(msg);
 	}
+	*/
 
 	private Port getPort(int fd) {
 		synchronized (this) {

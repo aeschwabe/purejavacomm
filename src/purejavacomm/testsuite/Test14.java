@@ -31,10 +31,8 @@ package purejavacomm.testsuite;
 
 import java.io.IOException;
 
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
-
 public class Test14 extends TestBase {
+
 	static volatile boolean m_ReadThreadRunning;
 	static volatile int m_ReadBytes = 0;
 	static volatile long m_T0;
@@ -43,7 +41,7 @@ public class Test14 extends TestBase {
 	static void run() throws Exception {
 
 		try {
-			int timeout = 100;
+			//int timeout = 100;
 			begin("Test14 - treshold disabled, timeout disabled");
 			openPort();
 
@@ -57,6 +55,7 @@ public class Test14 extends TestBase {
 			m_Port.disableReceiveThreshold();
 
 			Thread rxthread = new Thread(new Runnable() {
+
 				public void run() {
 					m_ReadThreadRunning = true;
 					try {

@@ -43,8 +43,6 @@ import com.sun.jna.Native;
 
 import java.util.*;
 
-import jtermios.windows.WinAPI.OVERLAPPED;
-
 /**
  * JTermios provides a limited cross platform unix termios type interface to
  * serial ports.
@@ -223,10 +221,8 @@ public class JTermios {
 	public interface JTermiosInterface {
 		public static class NativeSize extends IntegerType {
 
-			/**
-                     *
-                     */
 			private static final long serialVersionUID = 2398288011955445078L;
+
 			/**
 			 * Size of a size_t integer, in bytes.
 			 */
@@ -454,7 +450,7 @@ public class JTermios {
 	}
 
 	private static String toString(int n, FDSet fdset) {
-		StringBuffer s = new StringBuffer("[");
+		StringBuilder s = new StringBuilder("[");
 		for (int fd = 0; fd < n; fd++) {
 			if (fd > 0)
 				s.append(",");
@@ -538,13 +534,12 @@ public class JTermios {
 	}
 
 	public static class JTermiosLogging {
-		private static int LOG_MASK = 1;
-		public static boolean log = false;
+
+		private static int LOG_MASK;
+		public static boolean log;
 
 		static { // initialization 
-			String loglevel = System.getProperty("purejavacomm.loglevel");
-			if (loglevel != null)
-				setLogLevel(Integer.parseInt(loglevel));
+			setLogLevel(Integer.getInteger("purejavacomm.loglevel", 0));
 		}
 
 		public static String lineno() {
@@ -571,7 +566,7 @@ public class JTermios {
 		}
 
 		public static String log(byte[] bts, int n) {
-			StringBuffer b = new StringBuffer();
+			StringBuilder b = new StringBuilder();
 			if (n < 0 || n > bts.length)
 				n = bts.length;
 			b.append(String.format("[%d", bts.length));
@@ -584,7 +579,7 @@ public class JTermios {
 		}
 
 		public static String log(int[] ints, int n) {
-			StringBuffer b = new StringBuffer();
+			StringBuilder b = new StringBuilder();
 			if (n < 0 || n > ints.length)
 				n = ints.length;
 			b.append(String.format("[%d", ints.length));
@@ -597,7 +592,7 @@ public class JTermios {
 		}
 
 		public static String log(char[] bts, int n) {
-			StringBuffer b = new StringBuffer();
+			StringBuilder b = new StringBuilder();
 			if (n < 0 || n > bts.length)
 				n = bts.length;
 			b.append(String.format("[%d", bts.length));
@@ -610,7 +605,7 @@ public class JTermios {
 		}
 
 		public static String log(Object[] bts, int n) {
-			StringBuffer b = new StringBuffer();
+			StringBuilder b = new StringBuilder();
 			if (n < 0 || n > bts.length)
 				n = bts.length;
 			b.append(String.format("[%d", bts.length));
@@ -624,7 +619,7 @@ public class JTermios {
 			return b.toString();
 		}
 
-		static private StringBuffer buffer = new StringBuffer();
+		static private StringBuilder buffer = new StringBuilder();
 
 		static public boolean log(int l, String format, Object... args) {
 			if (l == 0 || LOG_MASK != 0) {

@@ -31,6 +31,8 @@
 package purejavacomm;
 
 public class PortInUseException extends Exception {
+	private static final long serialVersionUID = -1154902946613609754L;
+
 	public String currentOwner;
 
 	PortInUseException(String str) {

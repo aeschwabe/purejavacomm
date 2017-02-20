@@ -32,7 +32,7 @@ package purejavacomm.testsuite;
 import purejavacomm.*;
 
 public class Test8 extends TestBase {
-	
+
 	// To allow us to run this test with limited hardware, we use two sets of
 	// tests. The limited set includes only 8 bits, 1 stop bit and none/even/odd
 	// parity.
@@ -46,11 +46,10 @@ public class Test8 extends TestBase {
 	private static final int FULL_DATABITS[] = { SerialPort.DATABITS_8, SerialPort.DATABITS_7, SerialPort.DATABITS_6, SerialPort.DATABITS_5 };
 	private static final int FULL_DATAMASK[] = { 0xFF, 0x7F, 0x3F, 0x1F };
 
-	
 	static void run() throws Exception {
 		run(true);
 	}
-	
+
 	static void run(boolean allModes) throws Exception {
 		try {
 			begin("Test8 - parity etc");
@@ -68,7 +67,7 @@ public class Test8 extends TestBase {
 				parity = LIMITED_PARITY;
 				stopbits = LIMITED_STOPBITS;
 				databits = LIMITED_DATABITS;
-				datamask = LIMITED_DATAMASK;				
+				datamask = LIMITED_DATAMASK;
 			}
 			System.out.println();
 			int tn = 0;
@@ -137,7 +136,7 @@ public class Test8 extends TestBase {
 								sent[i] = (byte) i;
 							m_Out = m_Port.getOutputStream();
 							m_In = m_Port.getInputStream();
-							long t0 = System.currentTimeMillis();
+							//long t0 = System.currentTimeMillis();
 							m_Out.write(sent);
 
 							int n = 0;
@@ -155,7 +154,7 @@ public class Test8 extends TestBase {
 									// If we send more bits than can be
 									// transmitted, we expect the excessive bits
 									// to be discarded
-									if (databits[dbi]>=7) { // no OS seems to really support 5/6 bits so we cannot test them
+									if (databits[dbi] >= 7) { // no OS seems to really support 5/6 bits so we cannot test them
 										int tx = sent[i] & datamask[dbi];
 										if (rcvd[i] != tx) {
 											fail("failed: transmit (excessive) '0x%02X' != receive'0x%02X'%n", tx, rcvd[i]);

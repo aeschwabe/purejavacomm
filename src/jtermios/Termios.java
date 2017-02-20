@@ -40,16 +40,17 @@ final public class Termios {
 	public byte[] c_cc = new byte[20];
 	public int c_ispeed;
 	public int c_ospeed;
+
 	public void set(Termios s) {
-		c_iflag=s.c_iflag;
-		c_oflag=s.c_oflag;
-		c_cflag=s.c_cflag;
-		c_lflag=s.c_lflag;
-		System.arraycopy(s.c_cc,0,c_cc,0,c_cc.length);
-		c_ispeed=s.c_ispeed;
-		c_ospeed=s.c_ospeed;	
+		c_iflag = s.c_iflag;
+		c_oflag = s.c_oflag;
+		c_cflag = s.c_cflag;
+		c_lflag = s.c_lflag;
+		System.arraycopy(s.c_cc, 0, c_cc, 0, c_cc.length);
+		c_ispeed = s.c_ispeed;
+		c_ospeed = s.c_ospeed;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -63,7 +64,7 @@ final public class Termios {
 		result = prime * result + c_ospeed;
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

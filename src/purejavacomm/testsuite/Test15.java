@@ -29,10 +29,8 @@
  */
 package purejavacomm.testsuite;
 
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
-
 public class Test15 extends TestBase {
+
 	static void run() throws Exception {
 
 		try {
@@ -70,14 +68,13 @@ public class Test15 extends TestBase {
 				int n = m_In.read(rxbuffer, 0, 1000);
 				long T1 = System.currentTimeMillis();
 				int time = (int) (T1 - T0);
-				int etime= n * 150/100; // at 9600
+				int etime = n * 150 / 100; // at 9600
 				if (time > etime)
-					fail("expected read to return in " + etime+" but it took " + time + " msec and returned "+n +" bytes");
+					fail("expected read to return in " + etime + " but it took " + time + " msec and returned " + n + " bytes");
 				if (n < 10)
 					fail("was expecting at least 900 bytes, but got " + n + " bytes");
 			}
 
-			
 			finishedOK();
 		} finally {
 			closePort();

@@ -30,7 +30,6 @@
 package jtermios.solaris;
 
 import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
 import java.io.File;
 
 import java.util.*;
@@ -46,231 +45,232 @@ import static jtermios.JTermios.JTermiosLogging.log;
 
 public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 
-    private static String DEVICE_DIR_PATH = "/dev/";
-    static C_lib_DirectMapping m_ClibDM;
-    static C_lib m_Clib;
-    static NonDirectCLib m_ClibND;
+	private static String DEVICE_DIR_PATH = "/dev/";
+	static C_lib_DirectMapping m_ClibDM;
+	static C_lib m_Clib;
+	static NonDirectCLib m_ClibND;
 
-    static {
-        Native.setPreserveLastError(true);
-        m_ClibND = (NonDirectCLib) Native.loadLibrary(Platform.C_LIBRARY_NAME, NonDirectCLib.class);
-        Native.register(C_lib_DirectMapping.class, NativeLibrary.getInstance(Platform.C_LIBRARY_NAME));
-        m_ClibDM = new C_lib_DirectMapping();
-        m_Clib = m_ClibDM;
-    }
+	static {
+		Native.setPreserveLastError(true);
+		m_ClibND = (NonDirectCLib) Native.loadLibrary(Platform.C_LIBRARY_NAME, NonDirectCLib.class);
+		Native.register(C_lib_DirectMapping.class, NativeLibrary.getInstance(Platform.C_LIBRARY_NAME));
+		m_ClibDM = new C_lib_DirectMapping();
+		m_Clib = m_ClibDM;
+	}
 
-    public static class C_lib_DirectMapping implements C_lib {
+	public static class C_lib_DirectMapping implements C_lib {
 
-        native public int pipe(int[] fds);
+		native public int pipe(int[] fds);
 
-        native public int tcdrain(int fd);
+		native public int tcdrain(int fd);
 
-        native public void cfmakeraw(termios termios);
+		native public void cfmakeraw(termios termios);
 
-        native public int fcntl(int fd, int cmd, int arg);
+		native public int fcntl(int fd, int cmd, int arg);
 
-        native public int ioctl(int fd, int cmd, int[] arg);
+		native public int ioctl(int fd, int cmd, int[] arg);
 
-        native public int open(String path, int flags);
+		native public int open(String path, int flags);
 
-        native public int close(int fd);
+		native public int close(int fd);
 
-        native public int tcgetattr(int fd, termios termios);
+		native public int tcgetattr(int fd, termios termios);
 
-        native public int tcsetattr(int fd, int cmd, termios termios);
+		native public int tcsetattr(int fd, int cmd, termios termios);
 
-        native public int cfsetispeed(termios termios, NativeLong i);
+		native public int cfsetispeed(termios termios, NativeLong i);
 
-        native public int cfsetospeed(termios termios, NativeLong i);
+		native public int cfsetospeed(termios termios, NativeLong i);
 
-        native public NativeLong cfgetispeed(termios termios);
+		native public NativeLong cfgetispeed(termios termios);
 
-        native public NativeLong cfgetospeed(termios termios);
+		native public NativeLong cfgetospeed(termios termios);
 
-        native public NativeSize write(int fd, byte[] buffer, NativeSize count);
+		native public NativeSize write(int fd, byte[] buffer, NativeSize count);
 
-        native public NativeSize read(int fd, byte[] buffer, NativeSize count);
+		native public NativeSize read(int fd, byte[] buffer, NativeSize count);
 
-        native public int tcflush(int fd, int qs);
+		native public int tcflush(int fd, int qs);
 
-        native public void perror(String msg);
+		native public void perror(String msg);
 
-        native public int tcsendbreak(int fd, int duration);
-    }
+		native public int tcsendbreak(int fd, int duration);
+	}
 
-    public interface C_lib extends com.sun.jna.Library {
+	public interface C_lib extends com.sun.jna.Library {
 
-        public int pipe(int[] fds);
+		public int pipe(int[] fds);
 
-        public int tcdrain(int fd);
+		public int tcdrain(int fd);
 
-        public void cfmakeraw(termios termios);
+		public void cfmakeraw(termios termios);
 
-        public int fcntl(int fd, int cmd, int arg);
+		public int fcntl(int fd, int cmd, int arg);
 
-        public int ioctl(int fd, int cmd, int[] arg);
+		public int ioctl(int fd, int cmd, int[] arg);
 
-        public int open(String path, int flags);
+		public int open(String path, int flags);
 
-        public int close(int fd);
+		public int close(int fd);
 
-        public int tcgetattr(int fd, termios termios);
+		public int tcgetattr(int fd, termios termios);
 
-        public int tcsetattr(int fd, int cmd, termios termios);
+		public int tcsetattr(int fd, int cmd, termios termios);
 
-        public int cfsetispeed(termios termios, NativeLong i);
+		public int cfsetispeed(termios termios, NativeLong i);
 
-        public int cfsetospeed(termios termios, NativeLong i);
+		public int cfsetospeed(termios termios, NativeLong i);
 
-        public NativeLong cfgetispeed(termios termios);
+		public NativeLong cfgetispeed(termios termios);
 
-        public NativeLong cfgetospeed(termios termios);
+		public NativeLong cfgetospeed(termios termios);
 
-        public NativeSize write(int fd, byte[] buffer, NativeSize count);
+		public NativeSize write(int fd, byte[] buffer, NativeSize count);
 
-        public NativeSize read(int fd, byte[] buffer, NativeSize count);
+		public NativeSize read(int fd, byte[] buffer, NativeSize count);
 
-        public int tcflush(int fd, int qs);
+		public int tcflush(int fd, int qs);
 
-        public void perror(String msg);
+		public void perror(String msg);
 
-        public int tcsendbreak(int fd, int duration);
+		public int tcsendbreak(int fd, int duration);
 
-    }
+	}
 
-    public interface NonDirectCLib extends com.sun.jna.Library {
+	public interface NonDirectCLib extends com.sun.jna.Library {
 
-        public int select(int n, fd_set read, fd_set write, fd_set error, timeval timeout);
+		public int select(int n, fd_set read, fd_set write, fd_set error, timeval timeout);
 
-        public int poll(pollfd.ByReference pfds, int nfds, int timeout);
-    }
+		public int poll(pollfd.ByReference pfds, int nfds, int timeout);
+	}
 
-    static public class timeval extends Structure {
+	static public class timeval extends Structure {
 
-        public NativeLong tv_sec;
-        public NativeLong tv_usec;
-
-        @Override
-        protected List getFieldOrder() {
-            return Arrays.asList(//
-                    "tv_sec",//
-                    "tv_usec"//
-            );
-        }
-
-        public timeval(jtermios.TimeVal timeout) {
-            tv_sec = new NativeLong(timeout.tv_sec);
-            tv_usec = new NativeLong(timeout.tv_usec);
-        }
-    }
-
-    static public class pollfd extends Structure {
-
-        public static class ByReference extends pollfd implements Structure.ByReference {
-        }
-        public int fd;
-        public short events;
-        public short revents;
-
-        @Override
-        protected List getFieldOrder() {
-            return Arrays.asList(//
-                    "fd",//
-                    "events",//
-                    "revents"//
-            );
-        }
-
-        public pollfd() {
-        }
-
-        public pollfd(Pollfd pfd) {
-            fd = pfd.fd;
-            events = pfd.events;
-            revents = pfd.revents;
-        }
-    }
-
-    static public class fd_set extends Structure implements FDSet {
-
-        private final static int NFBBITS = NativeLong.SIZE * 8;
-        private final static int fd_count = 1024;
-        public NativeLong[] fd_array = new NativeLong[(fd_count + NFBBITS - 1) / NFBBITS];
-
-        public fd_set() {
-            for (int i = 0; i < fd_array.length; ++i) {
-                fd_array[i] = new NativeLong();
-            }
-        }
-
-        @Override
-        protected List getFieldOrder() {
-            return Arrays.asList(//
-                    "fd_array"//
-            );
-        }
-
-        public void FD_SET(int fd) {
-            fd_array[fd / NFBBITS].setValue(fd_array[fd / NFBBITS].longValue() | (1L << (fd % NFBBITS)));
-        }
-
-        public boolean FD_ISSET(int fd) {
-            return (fd_array[fd / NFBBITS].longValue() & (1L << (fd % NFBBITS))) != 0;
-        }
-
-        public void FD_ZERO() {
-            for (NativeLong fd : fd_array) {
-                fd.setValue(0L);
-            }
-        }
-
-        public void FD_CLR(int fd) {
-            fd_array[fd / NFBBITS].setValue(fd_array[fd / NFBBITS].longValue() & ~(1L << (fd % NFBBITS)));
-        }
-
-    }
-
-    static public class termios extends Structure {
-
-        public int c_iflag;
-        public int c_oflag;
-        public int c_cflag;
-        public int c_lflag;
-        public byte[] c_cc = new byte[32];
-
-        @Override
-        protected List getFieldOrder() {
-            return Arrays.asList(//
-                    "c_iflag",//
-                    "c_oflag",//
-                    "c_cflag",//
-                    "c_lflag",//
-                    "c_cc"//
-            );
-        }
-
-        public termios() {
-        }
-
-        public termios(jtermios.Termios t) {
-            c_iflag = t.c_iflag;
-            c_oflag = t.c_oflag;
-            c_cflag = t.c_cflag;
-            c_lflag = t.c_lflag;
-            System.arraycopy(t.c_cc, 0, c_cc, 0, Math.min(t.c_cc.length, c_cc.length));
-        }
-
-        public void update(jtermios.Termios t) {
-            t.c_iflag = c_iflag;
-            t.c_oflag = c_oflag;
-            t.c_cflag = c_cflag;
-            t.c_lflag = c_lflag;
-            System.arraycopy(c_cc, 0, t.c_cc, 0, Math.min(t.c_cc.length, c_cc.length));
-        }
-    }
-
-    public JTermiosImpl() {
-        log = log && log(1, "instantiating %s\n", getClass().getCanonicalName());
+		public NativeLong tv_sec;
+		public NativeLong tv_usec;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return Arrays.asList(//
+							"tv_sec", //
+							"tv_usec"//
+			);
+		}
+
+		public timeval(jtermios.TimeVal timeout) {
+			tv_sec = new NativeLong(timeout.tv_sec);
+			tv_usec = new NativeLong(timeout.tv_usec);
+		}
+	}
+
+	static public class pollfd extends Structure {
+
+		public static class ByReference extends pollfd implements Structure.ByReference {
+		}
+
+		public int fd;
+		public short events;
+		public short revents;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return Arrays.asList(//
+							"fd", //
+							"events", //
+							"revents"//
+			);
+		}
+
+		public pollfd() {
+		}
+
+		public pollfd(Pollfd pfd) {
+			fd = pfd.fd;
+			events = pfd.events;
+			revents = pfd.revents;
+		}
+	}
+
+	static public class fd_set extends Structure implements FDSet {
+
+		private final static int NFBBITS = NativeLong.SIZE * 8;
+		private final static int fd_count = 1024;
+		public NativeLong[] fd_array = new NativeLong[(fd_count + NFBBITS - 1) / NFBBITS];
+
+		public fd_set() {
+			for (int i = 0; i < fd_array.length; ++i) {
+				fd_array[i] = new NativeLong();
+			}
+		}
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return Arrays.asList(//
+							"fd_array"//
+			);
+		}
+
+		public void FD_SET(int fd) {
+			fd_array[fd / NFBBITS].setValue(fd_array[fd / NFBBITS].longValue() | (1L << (fd % NFBBITS)));
+		}
+
+		public boolean FD_ISSET(int fd) {
+			return (fd_array[fd / NFBBITS].longValue() & (1L << (fd % NFBBITS))) != 0;
+		}
+
+		public void FD_ZERO() {
+			for (NativeLong fd : fd_array) {
+				fd.setValue(0L);
+			}
+		}
+
+		public void FD_CLR(int fd) {
+			fd_array[fd / NFBBITS].setValue(fd_array[fd / NFBBITS].longValue() & ~(1L << (fd % NFBBITS)));
+		}
+
+	}
+
+	static public class termios extends Structure {
+
+		public int c_iflag;
+		public int c_oflag;
+		public int c_cflag;
+		public int c_lflag;
+		public byte[] c_cc = new byte[32];
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return Arrays.asList(//
+							"c_iflag", //
+							"c_oflag", //
+							"c_cflag", //
+							"c_lflag", //
+							"c_cc"//
+			);
+		}
+
+		public termios() {
+		}
+
+		public termios(jtermios.Termios t) {
+			c_iflag = t.c_iflag;
+			c_oflag = t.c_oflag;
+			c_cflag = t.c_cflag;
+			c_lflag = t.c_lflag;
+			System.arraycopy(t.c_cc, 0, c_cc, 0, Math.min(t.c_cc.length, c_cc.length));
+		}
+
+		public void update(jtermios.Termios t) {
+			t.c_iflag = c_iflag;
+			t.c_oflag = c_oflag;
+			t.c_cflag = c_cflag;
+			t.c_lflag = c_lflag;
+			System.arraycopy(c_cc, 0, t.c_cc, 0, Math.min(t.c_cc.length, c_cc.length));
+		}
+	}
+
+	public JTermiosImpl() {
+		log = log && log(1, "instantiating %s\n", getClass().getCanonicalName());
 
 		// sys/filio.h stuff
 		FIONREAD = 0x4004667F;
@@ -386,130 +386,130 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 
 		//select.h stuff
 
-    }
+	}
 
-    public int errno() {
-        return Native.getLastError();
-    }
+	public int errno() {
+		return Native.getLastError();
+	}
 
-    public void cfmakeraw(Termios termios) {
-        termios t = new termios(termios);
-        m_Clib.cfmakeraw(t);
-        t.update(termios);
-    }
+	public void cfmakeraw(Termios termios) {
+		termios t = new termios(termios);
+		m_Clib.cfmakeraw(t);
+		t.update(termios);
+	}
 
-    public int fcntl(int fd, int cmd, int arg) {
-        return m_Clib.fcntl(fd, cmd, arg);
-    }
+	public int fcntl(int fd, int cmd, int arg) {
+		return m_Clib.fcntl(fd, cmd, arg);
+	}
 
-    public int tcdrain(int fd) {
-        return m_Clib.tcdrain(fd);
-    }
+	public int tcdrain(int fd) {
+		return m_Clib.tcdrain(fd);
+	}
 
-    public int cfgetispeed(Termios termios) {
-        return m_Clib.cfgetispeed(new termios(termios)).intValue();
-    }
+	public int cfgetispeed(Termios termios) {
+		return m_Clib.cfgetispeed(new termios(termios)).intValue();
+	}
 
-    public int cfgetospeed(Termios termios) {
-        return m_Clib.cfgetospeed(new termios(termios)).intValue();
-    }
+	public int cfgetospeed(Termios termios) {
+		return m_Clib.cfgetospeed(new termios(termios)).intValue();
+	}
 
-    public int cfsetispeed(Termios termios, int speed) {
-        termios t = new termios(termios);
-        int ret = m_Clib.cfsetispeed(t, new NativeLong(speed));
-        t.update(termios);
-        return ret;
-    }
+	public int cfsetispeed(Termios termios, int speed) {
+		termios t = new termios(termios);
+		int ret = m_Clib.cfsetispeed(t, new NativeLong(speed));
+		t.update(termios);
+		return ret;
+	}
 
-    public int cfsetospeed(Termios termios, int speed) {
-        termios t = new termios(termios);
-        int ret = m_Clib.cfsetospeed(t, new NativeLong(speed));
-        t.update(termios);
-        return ret;
-    }
+	public int cfsetospeed(Termios termios, int speed) {
+		termios t = new termios(termios);
+		int ret = m_Clib.cfsetospeed(t, new NativeLong(speed));
+		t.update(termios);
+		return ret;
+	}
 
-    public int open(String s, int t) {
-        if (s != null && !s.startsWith("/")) {
-            s = DEVICE_DIR_PATH + s;
-        }
-        return m_Clib.open(s, t);
-    }
+	public int open(String s, int t) {
+		if (s != null && !s.startsWith("/")) {
+			s = DEVICE_DIR_PATH + s;
+		}
+		return m_Clib.open(s, t);
+	}
 
-    public int read(int fd, byte[] buffer, int len) {
-        return m_Clib.read(fd, buffer, new NativeSize(len)).intValue();
-    }
+	public int read(int fd, byte[] buffer, int len) {
+		return m_Clib.read(fd, buffer, new NativeSize(len)).intValue();
+	}
 
-    public int write(int fd, byte[] buffer, int len) {
-        return m_Clib.write(fd, buffer, new NativeSize(len)).intValue();
-    }
+	public int write(int fd, byte[] buffer, int len) {
+		return m_Clib.write(fd, buffer, new NativeSize(len)).intValue();
+	}
 
-    public int close(int fd) {
-        return m_Clib.close(fd);
-    }
+	public int close(int fd) {
+		return m_Clib.close(fd);
+	}
 
-    public int tcflush(int fd, int b) {
-        return m_Clib.tcflush(fd, b);
-    }
+	public int tcflush(int fd, int b) {
+		return m_Clib.tcflush(fd, b);
+	}
 
-    public int tcgetattr(int fd, Termios termios) {
-        termios t = new termios();
-        int ret = m_Clib.tcgetattr(fd, t);
-        t.update(termios);
-        return ret;
-    }
+	public int tcgetattr(int fd, Termios termios) {
+		termios t = new termios();
+		int ret = m_Clib.tcgetattr(fd, t);
+		t.update(termios);
+		return ret;
+	}
 
-    public void perror(String msg) {
-        m_Clib.perror(msg);
-    }
+	public void perror(String msg) {
+		m_Clib.perror(msg);
+	}
 
-    public int tcsendbreak(int fd, int duration) {
-        // If duration is not zero, it sends zero-valued bits for duration*N seconds,
-        // where N is at least 0.25, and not more than 0.5.
-        return m_Clib.tcsendbreak(fd, duration / 250);
-    }
+	public int tcsendbreak(int fd, int duration) {
+		// If duration is not zero, it sends zero-valued bits for duration*N seconds,
+		// where N is at least 0.25, and not more than 0.5.
+		return m_Clib.tcsendbreak(fd, duration / 250);
+	}
 
-    public int tcsetattr(int fd, int cmd, Termios termios) {
-        return m_Clib.tcsetattr(fd, cmd, new termios(termios));
-    }
+	public int tcsetattr(int fd, int cmd, Termios termios) {
+		return m_Clib.tcsetattr(fd, cmd, new termios(termios));
+	}
 
-    public int select(int nfds, FDSet rfds, FDSet wfds, FDSet efds, TimeVal timeout) {
-        timeval tout = null;
-        if (timeout != null) {
-            tout = new timeval(timeout);
-        }
+	public int select(int nfds, FDSet rfds, FDSet wfds, FDSet efds, TimeVal timeout) {
+		timeval tout = null;
+		if (timeout != null) {
+			tout = new timeval(timeout);
+		}
 
-        return m_ClibND.select(nfds, (fd_set) rfds, (fd_set) wfds, (fd_set) efds, tout);
-    }
+		return m_ClibND.select(nfds, (fd_set) rfds, (fd_set) wfds, (fd_set) efds, tout);
+	}
 
-    public int poll(Pollfd fds[], int nfds, int timeout) {
-        if (nfds <= 0 || nfds > fds.length) {
-            throw new java.lang.IllegalArgumentException("nfds " + nfds + " must be <= fds.length " + fds.length);
-        }
-        pollfd.ByReference parampfds = new pollfd.ByReference();
-        pollfd[] pfds = (pollfd[]) parampfds.toArray(nfds);
-        for (int i = 0; i < nfds; i++) {
-            pfds[i].fd = fds[i].fd;
-            pfds[i].events = fds[i].events;
-        }
-        int ret = m_ClibND.poll(parampfds, nfds, timeout);
-        for (int i = 0; i < nfds; i++) {
-            fds[i].revents = pfds[i].revents;
-        }
-        return ret;
-    }
+	public int poll(Pollfd fds[], int nfds, int timeout) {
+		if (nfds <= 0 || nfds > fds.length) {
+			throw new java.lang.IllegalArgumentException("nfds " + nfds + " must be <= fds.length " + fds.length);
+		}
+		pollfd.ByReference parampfds = new pollfd.ByReference();
+		pollfd[] pfds = (pollfd[]) parampfds.toArray(nfds);
+		for (int i = 0; i < nfds; i++) {
+			pfds[i].fd = fds[i].fd;
+			pfds[i].events = fds[i].events;
+		}
+		int ret = m_ClibND.poll(parampfds, nfds, timeout);
+		for (int i = 0; i < nfds; i++) {
+			fds[i].revents = pfds[i].revents;
+		}
+		return ret;
+	}
 
-    public boolean canPoll() {
-        return true;
-    }
+	public boolean canPoll() {
+		return true;
+	}
 
-    public FDSet newFDSet() {
-        return new fd_set();
-    }
+	public FDSet newFDSet() {
+		return new fd_set();
+	}
 
-    public int ioctl(int fd, int cmd, int... data) {
-                // At this time, all ioctl commands we have defined are either no parameter or 4 byte parameter.
-                return m_Clib.ioctl(fd, cmd, data);
-    }
+	public int ioctl(int fd, int cmd, int... data) {
+		// At this time, all ioctl commands we have defined are either no parameter or 4 byte parameter.
+		return m_Clib.ioctl(fd, cmd, data);
+	}
 
 	public String getPortNamePattern() {
 		return ".*";
@@ -617,7 +617,7 @@ public class JTermiosImpl implements jtermios.JTermios.JTermiosInterface {
 			return r;
 		return 0;
 	}
-	
+
 	public int pipe(int[] fds) {
 		return m_Clib.pipe(fds);
 	}

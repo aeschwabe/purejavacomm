@@ -53,7 +53,7 @@ public class JTermiosDemo {
 		opts.c_oflag = 0;
 		opts.c_cflag = CLOCAL | CREAD | CS8;
 		opts.c_lflag = 0;
-		
+
 		opts.c_cc[VMIN] = 0;
 		opts.c_cc[VTIME] = 10;
 
@@ -65,7 +65,7 @@ public class JTermiosDemo {
 		S(tcflush(fd, TCIOFLUSH));
 
 		final String TEST_STRING = "Not so very long text string";
-		
+
 		byte[] tx = TEST_STRING.getBytes();
 		byte[] rx = new byte[tx.length];
 		int l = tx.length;

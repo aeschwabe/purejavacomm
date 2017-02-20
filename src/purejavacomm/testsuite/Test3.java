@@ -29,13 +29,10 @@
  */
 package purejavacomm.testsuite;
 
-import java.util.Arrays;
-
 import purejavacomm.SerialPort;
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
 
 public class Test3 extends TestBase {
+
 	static void run() throws Exception {
 		try {
 			begin("Test3 - transmit all characters");

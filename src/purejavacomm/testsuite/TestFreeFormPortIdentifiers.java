@@ -18,9 +18,8 @@ public class TestFreeFormPortIdentifiers extends TestBase {
 
 	public static void testMissingPortInCommPortIdentifier() throws Exception {
 		begin("TestMissingPort"); //  - getPortIdentifier on missing port
-
+		
 		// Must throw NoSuchPortException
-
 		try {
 			CommPortIdentifier.getPortIdentifier("blablub");
 
@@ -28,32 +27,28 @@ public class TestFreeFormPortIdentifiers extends TestBase {
 		} catch (NoSuchPortException nspe) {
 			// All good
 		}
-
+		
 		finishedOK();
 	}
-	
+
 	public static void testDevicePathInCommPortIdentifier() throws Exception {
 		begin("TestDevicePath "); // - getPortIdentifier on device path");
-
+		
 		// Must return an identifier
-
 		try {
 			CommPortIdentifier.getPortIdentifier(getPortName());
 		} catch (NoSuchPortException nspe) {
 			fail("Couldn't obtain identifier for device path");
 		}
-
 		finishedOK();
 	}
-	
+
 	public static void testDevicePathToInvalidTTYInCommPortIdentifier() throws Exception {
 		begin("TestDevicePathToInvalidTTY");// - getPortIdentifier on invalid device");
 
 		// Must throw NoSuchPortException
-
 		File tempFile = File.createTempFile("pjc", null);
 		tempFile.deleteOnExit();
-		
 		try {
 			CommPortIdentifier.getPortIdentifier(tempFile.getAbsolutePath());
 

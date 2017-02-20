@@ -43,7 +43,7 @@ public class PureJavaCommDemo {
 		try {
 			System.out.println("PureJavaCommDemo");
 			CommPortIdentifier portid = null;
-			Enumeration e = CommPortIdentifier.getPortIdentifiers();
+			Enumeration<CommPortIdentifier> e = CommPortIdentifier.getPortIdentifiers();
 			while (e.hasMoreElements()) {
 				portid = (CommPortIdentifier) e.nextElement();
 				System.out.println("found " + portid.getName());
@@ -58,6 +58,7 @@ public class PureJavaCommDemo {
 				final InputStream ins = port.getInputStream();
 				final boolean[] stop = { false };
 				port.addEventListener(new SerialPortEventListener() {
+
 					byte[] linebuf = new byte[10000];
 					int inp = 0;
 					int okcnt = 0;
@@ -85,13 +86,13 @@ public class PureJavaCommDemo {
 											System.out.println("check sum failure");
 											errcnt++;
 										}
-										System.out.println("msg "+inp+" ok " + okcnt + " err " + errcnt);
+										System.out.println("msg " + inp + " ok " + okcnt + " err " + errcnt);
 										inp = 0;
 									}
 								}
 							}
 							if (event.getEventType() == SerialPortEvent.OUTPUT_BUFFER_EMPTY) {
-								int n = 4+ (rnd.nextInt() & 63);
+								int n = 4 + (rnd.nextInt() & 63);
 								byte[] buffer = new byte[n + 2];
 								//System.err.print("Sending: " + new String(buffer));
 								int s = 0;

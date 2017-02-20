@@ -29,13 +29,12 @@
  */
 package purejavacomm.testsuite;
 
-import java.io.IOException;
-
 import purejavacomm.PureJavaSerialPort;
 import purejavacomm.SerialPortEvent;
 import purejavacomm.SerialPortEventListener;
 
 public class Test11 extends TestBase {
+
 	static volatile boolean m_ThreadRunning;
 
 	static volatile boolean m_ExitViaException;
@@ -53,11 +52,12 @@ public class Test11 extends TestBase {
 			m_Port.disableReceiveThreshold();
 
 			Thread thread = new Thread(new Runnable() {
+
 				public void run() {
 					m_ThreadRunning = true;
 					byte[] rxbuffer = new byte[1];
 					try {
-						int rxn = m_In.read(rxbuffer, 0, rxbuffer.length);
+						/*int rxn =*/ m_In.read(rxbuffer, 0, rxbuffer.length);
 					} catch (Exception e) {
 						m_ExitViaException = true;
 					}
@@ -86,6 +86,7 @@ public class Test11 extends TestBase {
 			m_Port.disableReceiveTimeout();
 			m_Port.disableReceiveThreshold();
 			thread = new Thread(new Runnable() {
+
 				public void run() {
 					final byte[] txbuffer = new byte[4 * 1024];
 					m_ThreadRunning = true;
@@ -114,6 +115,7 @@ public class Test11 extends TestBase {
 			// interrupting the internal thread -------------------------
 			openPort();
 			m_Port.addEventListener(new SerialPortEventListener() {
+
 				public void serialEvent(SerialPortEvent event) {
 				}
 			});

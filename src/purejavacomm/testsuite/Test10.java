@@ -31,10 +31,8 @@ package purejavacomm.testsuite;
 
 import java.io.IOException;
 
-import purejavacomm.SerialPortEvent;
-import purejavacomm.SerialPortEventListener;
-
 public class Test10 extends TestBase {
+
 	static volatile boolean m_ReadThreadRunning;
 	static volatile boolean m_ThreadStarted;
 	static volatile int m_ReadBytes = 0;
@@ -58,6 +56,7 @@ public class Test10 extends TestBase {
 			m_Port.enableReceiveThreshold(threshold);
 			{ // Test a single big read with threshold < read length
 				Thread rxthread = new Thread(new Runnable() {
+
 					public void run() {
 						m_ReadThreadRunning = true;
 						m_ThreadStarted = true;
@@ -101,15 +100,16 @@ public class Test10 extends TestBase {
 					fail("was expecting read to happen in " + timeMax + " but it took " + time + " msec");
 			}
 
-		{ // Test a single big read with  read length < threshold 
+			{ // Test a single big read with  read length < threshold 
 				Thread rxthread = new Thread(new Runnable() {
+
 					public void run() {
 						m_ReadThreadRunning = true;
 						m_ThreadStarted = true;
 						try {
 							m_ReadBytes = m_In.read(rxbuffer, 0, threshold / 2);
 							m_T1 = System.currentTimeMillis();
-					} catch (IOException e) {
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
 						m_ReadThreadRunning = false;
@@ -119,7 +119,7 @@ public class Test10 extends TestBase {
 				m_ReadThreadRunning = false;
 				m_ThreadStarted = false;
 				m_ReadBytes = -666;
-			rxthread.start();
+				rxthread.start();
 				while (!m_ThreadStarted)
 					Thread.sleep(10);
 

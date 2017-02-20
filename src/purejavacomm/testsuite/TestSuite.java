@@ -31,6 +31,7 @@
 package purejavacomm.testsuite;
 
 public class TestSuite {
+
 	public static void main(String[] args) throws Exception {
 		// Native.setProtected(false);
 		TestBase.init(args);

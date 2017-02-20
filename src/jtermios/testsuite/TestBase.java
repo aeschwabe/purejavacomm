@@ -34,6 +34,7 @@ import static jtermios.JTermios.errno;
 import jtermios.JTermios;
 
 public class TestBase {
+
 	protected static volatile String m_TestPortName;
 	protected static int m_Tab;
 	protected static int m_Progress;
@@ -42,14 +43,13 @@ public class TestBase {
 	public static void S(int result) throws TestFailedException {
 		S(result, null);
 	}
-	
+
 	public static void S(int result, String msg) throws TestFailedException {
 		if (result == -1) {
-			fail(msg == null ? "Operation failed with errno %d"
-					 : msg + " (errno %d)", errno());
+			fail(msg == null ? "Operation failed with errno %d" : msg + " (errno %d)", errno());
 		}
 	}
-	
+
 	static void begin(String name) {
 		System.out.printf("%-46s", name);
 		m_Tab = 46;
@@ -93,9 +93,8 @@ public class TestBase {
 	static public void init(String[] args) {
 		m_TestPortName = "cu.usbserial-FTOXM3NX";
 		if (args.length > 0) {
-			m_TestPortName = args[0];			
-		}
-		else {
+			m_TestPortName = args[0];
+		} else {
 			for (String port : JTermios.getPortList()) {
 				m_TestPortName = port;
 			}

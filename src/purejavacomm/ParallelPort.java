@@ -39,7 +39,6 @@ public class ParallelPort {
 	public static final int LPT_MODE_NIBBLE = 5;
 
 	void addEventListener(ParallelPortEventListener lsnr) {
-
 	}
 
 	int getMode() {
@@ -71,19 +70,15 @@ public class ParallelPort {
 	}
 
 	void notifyOnBuffer(boolean notify) {
-
 	}
 
 	void notifyOnError(boolean notify) {
-
 	}
 
 	void removeEventListener() {
-
 	}
 
 	void restart() {
-
 	}
 
 	int setMode(int mode) throws UnsupportedCommOperationException {
@@ -91,6 +86,5 @@ public class ParallelPort {
 	}
 
 	void suspend() {
-
 	}
 }

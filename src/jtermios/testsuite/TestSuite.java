@@ -31,6 +31,7 @@
 package jtermios.testsuite;
 
 public class TestSuite {
+
 	public static void main(String[] args) throws Exception {
 		TestBase.init(args);
 		try {
