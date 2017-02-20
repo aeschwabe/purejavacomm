@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- this does NOT compile the project, instead packages the classes and soources to two jar files-->
-<project name="purejavacomm" default="buildjar" basedir=".">
-	<target name="init">
-	</target>
-	<!-- create .jar -->
-	<target name="buildjar" depends="init">
-	    <delete file="./bin/purejavacomm.jar"/>
-		<jar jarfile="./bin/purejavacomm.jar" basedir="./classes">
-		</jar>
-	    <delete file="./bin/purejavacomm-src.jar"/>
-		<jar jarfile="./bin/purejavacomm-src.jar" basedir="./src">
-		</jar>
-	</target>
+<!-- this does NOT compile the project, instead packages the classes and sources to two jar files-->
+<project name="purejavacomm-build-jars" default="buildjar" basedir=".">
+    <target name="buildjar">
+        <delete file="${basedir}/bin/purejavacomm.jar"/>
+        <jar jarfile="${basedir}/bin/purejavacomm.jar" basedir="./classes"/>
 
+        <delete file="${basedir}/bin/purejavacomm-src.jar"/>
+        <jar jarfile="${basedir}/bin/purejavacomm-src.jar" basedir="./src"/>
+    </target>
 </project>
-
-<!-- end file build.xml -->
