@@ -790,7 +790,7 @@ public class PureJavaSerialPort extends SerialPort {
 			if (m_FD < 0) // replaces checkState call
 				failWithIllegalStateException();
 
-			if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the alue
+			if (m_TimeoutThresholdChanged) { // does not need the lock if we just check the value
 				synchronized (m_ThresholdTimeoutLock) {
 					// capture these here under guard so that we get a coherent picture of the settings
 					im_ReceiveTimeoutEnabled = m_ReceiveTimeoutEnabled;
