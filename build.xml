@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="purejavacomm" basedir="." default="jar">
-    <property name="src.dir" value="src"/>
-    <property name="build.dir" value="build"/>
-    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="src.dir" value="src" />
+    <property name="build.dir" value="build" />
+    <property name="classes.dir" value="${build.dir}/classes" />
     <property name="version" value="1.0.1" />
-    <property name="jar.dir" value="${build.dir}/jar"/>
-    <property name="jar.name" value="${ant.project.name}-${version}.jar"/>
-    <property name="jar.name.src" value="${ant.project.name}-src-${version}.jar"/>
+    <property name="jar.dir" value="${build.dir}/jar" />
+    <property name="jar.name" value="${ant.project.name}-${version}-jar.jar" />
+    <property name="jar.name.src" value="${ant.project.name}-${version}-source.jar" />
+    <property name="jar.name.doc" value="${ant.project.name}-${version}-javadoc.jar" />
+    <property name="doc.dir" value="${basedir}/doc" />
 
     <property name="lib.dir" value="lib" />
     <path id="lib.path.id">
@@ -18,24 +20,25 @@
     </target>
 
     <target name="clean">
-        <delete dir="${build.dir}"/>
-        <delete dir="${jar.dir}"/>
+        <delete dir="${build.dir}" />
+        <delete dir="${jar.dir}" />
     </target>
 
     <target name="compile" depends="resolve">
-        <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="lib.path.id" verbose="false" fork="true" failonerror="true" deprecation="true" debug="true" debuglevel="lines,vars,source" memoryMaximumSize="128m"/>
+        <mkdir dir="${classes.dir}" />
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="lib.path.id" verbose="false" fork="true" failonerror="true" deprecation="true" debug="true" debuglevel="lines,vars,source" memoryMaximumSize="128m" />
     </target>
-    
-    <target name="jar" depends="compile">
-        <delete dir="${jar.dir}"/>
-        <mkdir dir="${jar.dir}"/>
 
-        <jar destfile="${jar.dir}/${jar.name}" basedir="${classes.dir}"/>
-        <jar destfile="${jar.dir}/${jar.name.src}" basedir="${src.dir}"/>
+    <target name="jar" depends="compile">
+        <delete dir="${jar.dir}" />
+        <mkdir dir="${jar.dir}" />
+
+        <jar destfile="${jar.dir}/${jar.name}" basedir="${classes.dir}" />
+        <jar destfile="${jar.dir}/${jar.name.src}" basedir="${src.dir}" />
+        <jar destfile="${jar.dir}/${jar.name.doc}" basedir="${doc.dir}" />
 
         <ivy:publish resolver="local" pubrevision="${version}" forcedeliver="true" overwrite="true">
-           <artifacts pattern="${jar.dir}/[artifact]-[revision].[ext]" />
+            <artifacts pattern="${jar.dir}/[artifact]-[revision]-[type].[ext]" />
         </ivy:publish>
     </target>
 </project>
