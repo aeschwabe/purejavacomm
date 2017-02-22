@@ -18,6 +18,7 @@
     <publications>
         <artifact name="purejavacomm" type="jar" ext="jar" conf="master"/>
         <artifact name="purejavacomm" type="source" ext="jar" conf="sources" m:classifier="sources"/>
+        <artifact name="purejavacomm" type="csource" ext="zip" conf="sources" m:classifier="sources"/>
         <artifact name="purejavacomm" type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
     </publications>
  

@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="purejavacomm" basedir="." default="jar">
-    <property name="src.dir" value="src" />
-    <property name="build.dir" value="build" />
-    <property name="classes.dir" value="${build.dir}/classes" />
     <property name="version" value="1.0.1" />
+
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="c.src.dir" value="${basedir}/c" />
+    <property name="doc.dir" value="${basedir}/doc" />
+
+    <property name="build.dir" value="${basedir}/build" />
+    <property name="classes.dir" value="${build.dir}/classes" />
     <property name="jar.dir" value="${build.dir}/jar" />
+
     <property name="jar.name" value="${ant.project.name}-${version}-jar.jar" />
     <property name="jar.name.src" value="${ant.project.name}-${version}-source.jar" />
+    <property name="jar.name.c.src" value="${ant.project.name}-${version}-csource.zip" />
     <property name="jar.name.doc" value="${ant.project.name}-${version}-javadoc.jar" />
-    <property name="doc.dir" value="${basedir}/doc" />
 
     <property name="lib.dir" value="lib" />
     <path id="lib.path.id">
@@ -35,6 +40,7 @@
 
         <jar destfile="${jar.dir}/${jar.name}" basedir="${classes.dir}" />
         <jar destfile="${jar.dir}/${jar.name.src}" basedir="${src.dir}" />
+        <zip destfile="${jar.dir}/${jar.name.c.src}" basedir="${c.src.dir}" />
         <jar destfile="${jar.dir}/${jar.name.doc}" basedir="${doc.dir}" />
 
         <ivy:publish resolver="local" pubrevision="${version}" forcedeliver="true" overwrite="true">
